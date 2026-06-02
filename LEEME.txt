@@ -1,0 +1,244 @@
+═══════════════════════════════════════════════════════════════
+🌾 CAMPOS SIS · INSTRUCCIONES DE SETUP INICIAL
+═══════════════════════════════════════════════════════════════
+
+Este ZIP contiene el esqueleto inicial del SaaS Campos SIS.
+Es una versión vacía pero funcional con:
+  - Auth con email/password (Supabase Auth)
+  - Multi-tenancy preparada (productores como tenants)
+  - Super-admin panel (vos como dueño del SaaS)
+  - Admin panel del productor (vacío, listos para llenar)
+  - Sidebar, login, layouts, todo conectado
+
+═══════════════════════════════════════════════════════════════
+PASO 1 · CREAR REPOSITORIO EN GITHUB
+═══════════════════════════════════════════════════════════════
+
+1. Andá a github.com/new
+2. Repository name: campossis (o el que prefieras)
+3. Private
+4. NO inicialices con README (vamos a subir uno)
+5. Create repository
+
+═══════════════════════════════════════════════════════════════
+PASO 2 · DESCOMPRIMIR EL ZIP Y SUBIR A GIT
+═══════════════════════════════════════════════════════════════
+
+1. Descomprimí campossis.zip en una carpeta:
+   C:\Proyectos\campossis\
+
+2. Abrí una terminal en esa carpeta y corré:
+
+   git init
+   git add .
+   git commit -m "Initial commit: esqueleto Campos SIS"
+   git branch -M main
+   git remote add origin https://github.com/TU_USUARIO/campossis.git
+   git push -u origin main
+
+═══════════════════════════════════════════════════════════════
+PASO 3 · CREAR PROYECTO EN SUPABASE
+═══════════════════════════════════════════════════════════════
+
+1. Entrá a https://supabase.com/dashboard
+2. Click en "New project"
+3. Name: campossis-prod
+4. Database password: anotá una segura (la vas a necesitar)
+5. Region: South America (Sao Paulo)
+6. Click "Create new project" y esperá ~2 minutos
+
+═══════════════════════════════════════════════════════════════
+PASO 4 · CORRER LA MIGRACIÓN SQL
+═══════════════════════════════════════════════════════════════
+
+1. En Supabase Dashboard, andá a "SQL Editor"
+2. Click en "New query"
+3. Abrí el archivo migracion-01-base.sql (en la raíz de este ZIP)
+4. Copiá TODO el contenido y pegalo en el editor
+5. Click "Run" (Ctrl + Enter)
+
+Al final deberías ver una tabla con 3 filas:
+  productores   = 0
+  perfiles      = 0
+  suscripciones = 0
+
+═══════════════════════════════════════════════════════════════
+PASO 5 · OBTENER CREDENCIALES DE SUPABASE
+═══════════════════════════════════════════════════════════════
+
+1. En Supabase, andá a Settings (engranaje) > API
+2. Copiá estos 3 valores:
+
+   - Project URL                  (algo como https://xxx.supabase.co)
+   - anon public key              (eyJhbGc... larga)
+   - service_role secret key      (eyJhbGc... DIFERENTE, NO compartir)
+
+═══════════════════════════════════════════════════════════════
+PASO 6 · CREAR .env.local
+═══════════════════════════════════════════════════════════════
+
+1. En la raíz del proyecto, hacé una copia de .env.local.example
+2. Renombrala a .env.local
+3. Editala y poné los valores reales que copiaste en el paso 5
+
+Ejemplo:
+   NEXT_PUBLIC_SUPABASE_URL=https://abcdefgh.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJI...
+   SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJI...
+   NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+⚠️ NUNCA subas .env.local a Git. Ya está en .gitignore.
+
+═══════════════════════════════════════════════════════════════
+PASO 7 · CREAR TU USUARIO SUPER-ADMIN
+═══════════════════════════════════════════════════════════════
+
+1. En Supabase, andá a Authentication > Users
+2. Click "Add user" > "Create new user"
+3. Email: bebe@campossis.com.ar (o el que prefieras)
+4. Password: la que quieras (mínimo 8 caracteres)
+5. Click "Create user"
+
+Eso crea el usuario en auth.users Y dispara el trigger que crea
+un perfil en la tabla perfiles con rol 'empleado' por default.
+
+6. Ahora hacete super_admin. Andá a SQL Editor > New query y corré:
+
+   UPDATE perfiles
+   SET rol = 'super_admin', nombre = 'Bebe Álvarez'
+   WHERE email = 'bebe@campossis.com.ar';
+
+7. Verificá:
+
+   SELECT id, email, nombre, rol FROM perfiles;
+
+   Deberías ver tu usuario con rol = super_admin.
+
+═══════════════════════════════════════════════════════════════
+PASO 8 · CORRER EL PROYECTO LOCAL
+═══════════════════════════════════════════════════════════════
+
+En la terminal, parado en la carpeta del proyecto:
+
+   npm install
+   npm run dev
+
+Abrí http://localhost:3000 en el navegador.
+Deberías ver el homepage con "Campos SIS · Setup inicial funcionando".
+
+Click en "Iniciar sesión" > usá las credenciales del paso 7
+> deberías entrar al panel super-admin.
+
+═══════════════════════════════════════════════════════════════
+PASO 9 · DEPLOY EN VERCEL
+═══════════════════════════════════════════════════════════════
+
+1. Entrá a vercel.com/new
+2. Importá el repo "campossis"
+3. Framework: Next.js (detectado automáticamente)
+4. Environment Variables: agregá las 4 que pusiste en .env.local:
+   - NEXT_PUBLIC_SUPABASE_URL
+   - NEXT_PUBLIC_SUPABASE_ANON_KEY
+   - SUPABASE_SERVICE_ROLE_KEY
+   - NEXT_PUBLIC_SITE_URL (este lo cambias a https://camposis.bbnetsystem.com cuando configures el dominio)
+
+5. Deploy.
+
+═══════════════════════════════════════════════════════════════
+PASO 10 · CONFIGURAR SUBDOMINIO EN DONWEB
+═══════════════════════════════════════════════════════════════
+
+A) Crear el subdominio principal: camposis.bbnetsystem.com
+
+1. En DonWeb / Plesk, entrá a tu dominio bbnetsystem.com
+2. Crear subdominio: camposis
+3. Cuando esté creado, configurá los DNS apuntando a Vercel:
+   - Tipo: CNAME
+   - Nombre: camposis
+   - Valor: cname.vercel-dns.com
+
+B) Wildcard para los productores: *.camposis.bbnetsystem.com
+
+1. Agregar otro registro DNS:
+   - Tipo: CNAME
+   - Nombre: *.camposis
+   - Valor: cname.vercel-dns.com
+
+2. En Vercel, andá a Settings > Domains
+3. Agregar dominio: camposis.bbnetsystem.com
+4. Agregar dominio: *.camposis.bbnetsystem.com (wildcard)
+5. Vercel emite SSL automático
+
+Después de unos minutos, los subdominios apuntarán a tu app.
+
+═══════════════════════════════════════════════════════════════
+PASO 11 · PROBAR
+═══════════════════════════════════════════════════════════════
+
+1. Andá a https://camposis.bbnetsystem.com
+   → ves el homepage de Campos SIS
+2. Click "Iniciar sesión", entrás con tu super-admin
+   → deberías ver el panel super-admin
+3. Andá a /super-admin/productores y creá tu primer productor (más
+   adelante esto va a tener un formulario, por ahora se crea por SQL):
+
+   INSERT INTO productores (nombre, slug, email_contacto, plan)
+   VALUES ('Mi Campo Prueba', 'prueba', 'test@test.com', 'trial');
+
+4. Andá a https://prueba.camposis.bbnetsystem.com
+   → debería intentar cargar el panel del productor "prueba"
+   (vas a tener que asociar tu usuario o crear otro para entrar)
+
+═══════════════════════════════════════════════════════════════
+PRÓXIMO PASO
+═══════════════════════════════════════════════════════════════
+
+El esqueleto está listo. Las próximas semanas vamos a sumar
+de a poco los módulos (clientes, productos, silos, hacienda, etc).
+
+Cada bloque viene como un ZIP nuevo que copiás encima del proyecto.
+Nada que reemplazar — todo se va sumando.
+
+═══════════════════════════════════════════════════════════════
+ESTRUCTURA DEL PROYECTO
+═══════════════════════════════════════════════════════════════
+
+campossis/
+├── app/
+│   ├── layout.tsx               · root layout con fonts
+│   ├── page.tsx                 · homepage simple
+│   ├── globals.css              · tokens verde pasto
+│   ├── auth/login/              · login email+pass
+│   ├── auth/registro/           · solicitar cuenta (WhatsApp/email)
+│   ├── admin/                   · panel del productor
+│   └── super-admin/             · panel tuyo (Bebe)
+│       └── productores/         · gestión de clientes del SaaS
+├── components/
+│   └── layout/                  · sidebar, topbar, mobile-header
+├── lib/
+│   ├── supabase/                · clients (browser, server, admin)
+│   ├── actions/auth.ts          · login/logout server actions
+│   ├── tenant.ts                · resolución de productor por subdomain
+│   ├── types.ts                 · tipos TypeScript del dominio
+│   └── utils.ts                 · helpers (cn, formatARS, formatKg)
+├── proxy.ts                     · middleware multi-tenant + auth
+├── migracion-01-base.sql        · schema base (correr en Supabase)
+├── package.json
+├── next.config.ts
+├── tsconfig.json
+├── postcss.config.mjs
+├── .env.local.example           · template de variables de entorno
+├── .gitignore
+└── README.md
+
+═══════════════════════════════════════════════════════════════
+DUDAS / PROBLEMAS
+═══════════════════════════════════════════════════════════════
+
+Si algo falla:
+1. Verificá que las 4 env vars estén bien en .env.local
+2. Verificá que el SQL haya corrido sin errores
+3. Verificá que tu usuario tenga rol = super_admin en perfiles
+4. npm run dev → debería arrancar sin errores
+
+¡A construir Campos SIS! 🌾
