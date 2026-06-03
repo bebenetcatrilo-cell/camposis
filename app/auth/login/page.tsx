@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { Suspense } from 'react';
 import { LoginForm } from './login-form';
 
 export default function LoginPage() {
@@ -22,9 +21,7 @@ export default function LoginPage() {
 
         {/* Formulario */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-          <Suspense fallback={<div className="text-sm text-[var(--fg-muted)]">Cargando...</div>}>
-            <LoginForm />
-          </Suspense>
+          <LoginForm />
         </div>
 
         {/* Link a registro */}
