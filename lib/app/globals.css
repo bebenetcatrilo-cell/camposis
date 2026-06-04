@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════
+   CAMPOS SIS - Design System (basado en BBNet/Windows 11)
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  /* ── BASES ── */
+  --bg:           #f3f3f3;
+  --bg-card:      #ffffff;
+  --bg-card-2:    #f9f9f9;
+  --bg-card-3:    #f0f0f0;
+  --bg-hover:     rgba(0,0,0,.04);
+
+  /* ── BORDES ── */
+  --border:       rgba(0,0,0,.08);
+  --border-2:     rgba(0,0,0,.14);
+
+  /* ── TEXTOS ── */
+  --fg:           #1a1a1a;
+  --fg-muted:     #5a5a5a;
+  --fg-subtle:    #8a8a8a;
+
+  /* ── PRIMARIO (Verde Agro) ── */
+  --primary:      #1f7a34;        /* Verde más institucional */
+  --primary-h:    #166128;
+  --primary-l:    #d4ecd9;        /* Verde clarito para fondos sutiles */
+  --primary-ll:   #e8f4ea;        /* Verde muy claro para hover/active */
+  --primary-bg:   var(--primary-ll);
+
+  /* ── ACCENTS (alineados con BBNet) ── */
+  --green:        #107c10;
+  --green-l:      #dff6dd;
+  --orange:       #ca5010;
+  --orange-l:     #fde7d9;
+  --amber:        #ca5010;
+  --amber-bg:     #fde7d9;
+  --red:          #c42b1c;
+  --red-l:        #fde7e9;
+  --red-bg:       #fde7e9;
+  --blue:         #0067c0;
+  --blue-l:       #cce4f7;
+  --blue-ll:      #ebf4fc;
+  --purple:       #7719aa;
+  --purple-l:     #f0d9ff;
+  --whatsapp:     #25D366;
+
+  /* ── SOMBRAS (sutilísimas) ── */
+  --shadow-sm:    0 2px 4px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow:       0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:    0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
+
+  /* ── RADIOS ── */
+  --r-sm:         4px;
+  --r:            8px;
+  --r-lg:         12px;
+  --r-xl:         16px;
+
+  /* ── FUENTES ── */
+  --font-sans:    'Segoe UI', system-ui, -apple-system, 'Plus Jakarta Sans', sans-serif;
+  --font-serif:   'DM Serif Display', Georgia, serif;
+  --font-mono:    ui-monospace, 'Cascadia Code', 'SF Mono', monospace;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-card: var(--bg-card);
+  --color-bg-hover: var(--bg-hover);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-primary: var(--primary);
+  --color-primary-h: var(--primary-h);
+  --color-green: var(--green);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-purple: var(--purple);
+  --color-whatsapp: var(--whatsapp);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+}
+
+/* ── RESET ── */
+*{margin:0;padding:0;box-sizing:border-box;}
+*{-webkit-tap-highlight-color:transparent;}
+
+html,body{
+  background:var(--bg);
+  color:var(--fg);
+  font-family:var(--font-sans);
+  font-size:14px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ── TIPOGRAFÍA ── */
+h1,h2,h3,h4,h5,h6{font-weight:600;}
+
+.mono{
+  font-family:var(--font-mono);
+  font-variant-numeric:tabular-nums;
+  font-feature-settings:"tnum";
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{
+  background:rgba(0,0,0,.15);
+  border-radius:5px;
+  border:2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.3);}
+
+/* ── INPUTS / SELECTS ── */
+input, select, textarea{
+  font-family:inherit;
+  font-size:14px;
+}
+input:focus, select:focus, textarea:focus{
+  outline:none;
+}
