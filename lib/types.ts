@@ -284,3 +284,58 @@ export interface ItemFactura {
   orden: number;
   created_at: string;
 }
+
+// ── BLOQUE 10: Cheques ──
+export type EstadoChequeRecibido =
+  | 'cartera' | 'depositado' | 'acreditado' | 'rechazado'
+  | 'endosado' | 'vendido' | 'anulado';
+
+export type EstadoChequeEmitido =
+  | 'emitido' | 'entregado' | 'cobrado' | 'anulado';
+
+export interface ChequeRecibido {
+  id: string;
+  productor_id: string;
+  numero: string;
+  banco_emisor: string;
+  fecha_emision: string;
+  fecha_cobro: string;
+  importe: number;
+  a_nombre_de: string | null;
+  cliente_id: string | null;
+  factura_id: string | null;
+  estado: EstadoChequeRecibido;
+  banco_venta: string | null;
+  fecha_venta: string | null;
+  monto_recibido: number | null;
+  comision_venta: number | null;
+  banco_deposito: string | null;
+  fecha_deposito: string | null;
+  endosado_a: string | null;
+  fecha_endoso: string | null;
+  fecha_rechazo: string | null;
+  motivo_rechazo: string | null;
+  notas: string | null;
+  registrado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChequeEmitido {
+  id: string;
+  productor_id: string;
+  numero: string;
+  banco_propio: string;
+  fecha_emision: string;
+  fecha_pago: string;
+  importe: number;
+  beneficiario: string;
+  concepto: string | null;
+  estado: EstadoChequeEmitido;
+  fecha_entrega: string | null;
+  fecha_cobro: string | null;
+  notas: string | null;
+  registrado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
