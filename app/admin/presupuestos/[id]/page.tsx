@@ -3,6 +3,8 @@ import { getProductorActivo } from '@/lib/productor-actual';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CambiarEstado } from './cambiar-estado';
+import { CompartirBtn } from './compartir-btn';
+import { ImprimirBtn } from './imprimir-btn';
 import { formatARS, formatFecha } from '@/lib/utils';
 
 const ESTADOS: Record<string, { label: string; icon: string; bg: string; text: string }> = {
@@ -38,6 +40,12 @@ export default async function PresupuestoDetallePage({
     .eq('presupuesto_id', id)
     .order('orden');
 
+  const { data: productor } = await supabase
+    .from('productores')
+    .select('nombre, nombre_campo, cuit, direccion, localidad, provincia, telefono, whatsapp, email_contacto, logo_url, color_primario')
+    .eq('id', ctx.productor.id)
+    .single();
+
   const est = ESTADOS[pres.estado] ?? ESTADOS.pendiente;
   const numFmt = String(pres.numero).padStart(4, '0');
 
@@ -66,6 +74,14 @@ export default async function PresupuestoDetallePage({
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            {pres.token_publico && <CompartirBtn token={pres.token_publico} cliente={pres.cliente_nombre} numero={numFmt} total={Number(pres.total)} />}
+            {productor && items && (
+              <ImprimirBtn
+                pres={pres}
+                items={items}
+                productor={productor}
+              />
+            )}
             <CambiarEstado id={pres.id} estado={pres.estado} />
             <Link
               href={`/admin/presupuestos/${pres.id}/editar`}

@@ -14,24 +14,24 @@ export function FormSection({
   required,
 }: Props) {
   return (
-    <section className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-      <header className="mb-4 pb-4 border-b border-[var(--border)]">
-        <h3 className="flex items-center gap-3 text-base font-bold">
+    <section className="bg-white border border-[var(--border)] rounded-[12px] p-4 md:p-5 shadow-[0_2px_4px_rgba(0,0,0,.06),0_1px_2px_rgba(0,0,0,.04)]">
+      <header className="mb-3 pb-3 border-b border-[var(--border)]">
+        <h3 className="flex items-center gap-2 text-[14px] font-semibold">
           {number !== undefined && (
-            <span className="w-7 h-7 rounded-full bg-[var(--primary)] text-white text-sm grid place-items-center font-extrabold shrink-0">
+            <span className="w-6 h-6 rounded-full bg-[var(--primary)] text-white text-[11px] grid place-items-center font-bold shrink-0">
               {number}
             </span>
           )}
           <span>
             {title}
-            {required && <span className="text-red-500 ml-1">*</span>}
+            {required && <span className="text-[var(--red)] ml-1">*</span>}
           </span>
         </h3>
         {description && (
-          <p className="text-xs text-[var(--fg-muted)] mt-1.5 ml-10">{description}</p>
+          <p className="text-[12px] text-[var(--fg-muted)] mt-1 ml-8">{description}</p>
         )}
       </header>
-      <div className="space-y-4">{children}</div>
+      <div className="space-y-3">{children}</div>
     </section>
   );
 }

@@ -90,6 +90,9 @@ export async function crearPresupuestoAction(formData: FormData) {
     .rpc('siguiente_numero_presupuesto', { p_productor_id: ctx.productor.id });
   const numero = (numData as number) ?? 1;
 
+  // Generar token público único (para compartir por link sin login)
+  const token_publico = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+
   // Crear presupuesto
   const { data: pres, error } = await supabase
     .from('presupuestos')
@@ -111,6 +114,7 @@ export async function crearPresupuestoAction(formData: FormData) {
       total,
       estado: 'pendiente',
       notas,
+      token_publico,
       creado_por: user?.id ?? null,
     })
     .select()
