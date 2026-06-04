@@ -3,7 +3,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
-import { clearProductorActivo } from '@/lib/productor-actual';
+import { cookies } from 'next/headers';
+
+const COOKIE_PRODUCTOR_ACTIVO = 'campossis_productor_activo';
+
+async function limpiarCookieProductor() {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_PRODUCTOR_ACTIVO);
+}
 
 /**
  * Iniciar sesión con email + password.
@@ -30,7 +37,6 @@ export async function loginAction(formData: FormData) {
     return { error: error.message };
   }
 
-  // Determinar dónde mandarlo
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'No se pudo iniciar sesión' };
 
@@ -45,13 +51,11 @@ export async function loginAction(formData: FormData) {
     return { error: 'Tu cuenta está desactivada. Contactá al administrador.' };
   }
 
-  // Marcar último login (best-effort)
   await supabase
     .from('perfiles')
     .update({ ultimo_login: new Date().toISOString() })
     .eq('id', user.id);
 
-  // Redirect según rol
   if (redirectTo && redirectTo.startsWith('/')) {
     redirect(redirectTo);
   }
@@ -60,7 +64,7 @@ export async function loginAction(formData: FormData) {
   }
 
   // Usuario normal: limpiar cookie de productor previo y mandar al selector
-  await clearProductorActivo();
+  await limpiarCookieProductor();
   redirect('/auth/seleccionar-productor');
 }
 
@@ -70,7 +74,7 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  await clearProductorActivo();
+  await limpiarCookieProductor();
   revalidatePath('/', 'layout');
   redirect('/auth/login');
 }

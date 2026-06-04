@@ -4,12 +4,16 @@ import { getMisMembresia } from '@/lib/productor-actual';
 import { SeleccionarProductorList } from './lista';
 import { logoutAction } from '@/lib/actions/auth';
 
-export default async function SeleccionarProductorPage() {
+export default async function SeleccionarProductorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ auto?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/auth/login');
 
-  // Si es super-admin, va directo al super-admin panel
   const { data: perfil } = await supabase
     .from('perfiles')
     .select('nombre, rol_perfil, activo')
@@ -23,20 +27,11 @@ export default async function SeleccionarProductorPage() {
     redirect('/super-admin');
   }
 
-  // Obtener membresías
   const membresia = await getMisMembresia();
-
-  // Si tiene UNA sola membresía, redirect automáticamente (no mostrar selector)
-  if (membresia.length === 1) {
-    const { seleccionarProductorAction } = await import('@/lib/actions/cambiar-productor');
-    await seleccionarProductorAction(membresia[0].productor_id);
-    // ↑ esto redirige a /admin
-  }
 
   return (
     <main className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
-        {/* Header */}
         <div className="text-center space-y-2">
           <div className="text-5xl mb-3">🌾</div>
           <h1
@@ -50,7 +45,6 @@ export default async function SeleccionarProductorPage() {
           </p>
         </div>
 
-        {/* Lista de productores */}
         {membresia.length === 0 ? (
           <div className="bg-white border border-[var(--border)] rounded-2xl p-10 shadow-sm text-center">
             <div className="text-5xl mb-3">⏳</div>
@@ -69,10 +63,9 @@ export default async function SeleccionarProductorPage() {
             </form>
           </div>
         ) : (
-          <SeleccionarProductorList membresia={membresia} />
+          <SeleccionarProductorList membresia={membresia} autoSelect={membresia.length === 1} />
         )}
 
-        {/* Logout */}
         {membresia.length > 0 && (
           <div className="text-center">
             <form action={logoutAction}>

@@ -1,22 +1,44 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useEffect, useTransition } from 'react';
 import { cambiarProductorAction } from '@/lib/actions/cambiar-productor';
 import type { MembresiaConProductor } from '@/lib/types';
 
 export function SeleccionarProductorList({
   membresia,
+  autoSelect = false,
 }: {
   membresia: MembresiaConProductor[];
+  autoSelect?: boolean;
 }) {
   const [pending, startTransition] = useTransition();
+
+  // Si solo hay UNA membresía, seleccionar automáticamente
+  useEffect(() => {
+    if (autoSelect && membresia.length === 1 && !pending) {
+      startTransition(async () => {
+        await cambiarProductorAction(membresia[0].productor_id);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSelect, membresia.length]);
 
   function handleSelect(productorId: string) {
     startTransition(async () => {
       const r = await cambiarProductorAction(productorId);
       if (r?.error) alert(r.error);
-      // si OK, hace redirect
     });
+  }
+
+  if (autoSelect && membresia.length === 1) {
+    return (
+      <div className="bg-white border border-[var(--border)] rounded-2xl p-10 shadow-sm text-center">
+        <div className="text-3xl mb-3">⏳</div>
+        <p className="text-sm text-[var(--fg-muted)]">
+          Entrando a <strong>{membresia[0].productor.nombre}</strong>...
+        </p>
+      </div>
+    );
   }
 
   return (
@@ -28,7 +50,6 @@ export function SeleccionarProductorList({
           disabled={pending}
           className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-[var(--primary)] transition text-left flex items-center gap-4 group disabled:opacity-60"
         >
-          {/* Logo o icono */}
           <div className="w-14 h-14 rounded-xl bg-[var(--bg-hover)] grid place-items-center shrink-0 overflow-hidden">
             {m.productor.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -42,7 +63,6 @@ export function SeleccionarProductorList({
             )}
           </div>
 
-          {/* Info */}
           <div className="flex-1 min-w-0">
             <h3 className="font-bold group-hover:text-[var(--primary)] truncate">
               {m.productor.nombre}
@@ -58,7 +78,6 @@ export function SeleccionarProductorList({
             </div>
           </div>
 
-          {/* Arrow */}
           <div className="text-2xl text-[var(--fg-subtle)] group-hover:text-[var(--primary)] transition">
             →
           </div>

@@ -1,5 +1,3 @@
-'use server';
-
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import type { Productor, MembresiaConProductor } from '@/lib/types';
@@ -8,51 +6,53 @@ const COOKIE_PRODUCTOR_ACTIVO = 'campossis_productor_activo';
 
 /**
  * Devuelve todas las membresías del usuario actual (activas).
+ * Helper de lectura, no es server action.
  */
 export async function getMisMembresia(): Promise<MembresiaConProductor[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data, error } = await supabase
+  const { data: miembros, error } = await supabase
     .from('miembros')
-    .select(`
-      id,
-      perfil_id,
-      productor_id,
-      rol,
-      activo,
-      agregado_por,
-      created_at,
-      updated_at,
-      productor:productores!miembros_productor_id_fkey (
-        id,
-        nombre,
-        slug,
-        nombre_campo,
-        logo_url,
-        color_primario,
-        plan,
-        estado_suscripcion
-      )
-    `)
+    .select('id, perfil_id, productor_id, rol, activo, agregado_por, created_at, updated_at')
     .eq('perfil_id', user.id)
     .eq('activo', true)
     .order('created_at');
 
-  if (error || !data) return [];
+  if (error || !miembros || miembros.length === 0) {
+    return [];
+  }
 
-  // Normalizar (Supabase puede devolver el join como array u objeto)
-  return data.map((m: any) => ({
-    ...m,
-    productor: Array.isArray(m.productor) ? m.productor[0] : m.productor,
-  })) as MembresiaConProductor[];
+  const productorIds = miembros.map((m) => m.productor_id);
+  const { data: productores, error: errProd } = await supabase
+    .from('productores')
+    .select('id, nombre, slug, nombre_campo, logo_url, color_primario, plan, estado_suscripcion')
+    .in('id', productorIds);
+
+  if (errProd || !productores) {
+    return [];
+  }
+
+  const productoresMap = new Map(productores.map((p) => [p.id, p]));
+  const resultado: MembresiaConProductor[] = miembros
+    .map((m) => {
+      const productor = productoresMap.get(m.productor_id);
+      if (!productor) return null;
+      return {
+        ...m,
+        rol: m.rol as 'admin_productor' | 'empleado',
+        productor,
+      };
+    })
+    .filter((x): x is MembresiaConProductor => x !== null);
+
+  return resultado;
 }
 
 /**
  * Devuelve el productor activo basado en la cookie.
- * Si no hay cookie o el productor en cookie no es válido,
- * devuelve null (hay que mandar al selector).
+ * Helper de lectura, no es server action.
  */
 export async function getProductorActivo(): Promise<{
   productor: Productor;
@@ -66,20 +66,23 @@ export async function getProductorActivo(): Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Verificar que el usuario sea miembro activo de ese productor
   const { data: membresia } = await supabase
     .from('miembros')
-    .select('rol, activo, productor:productores(*)')
+    .select('rol, activo')
     .eq('perfil_id', user.id)
     .eq('productor_id', productorActivoId)
     .eq('activo', true)
     .single();
 
-  if (!membresia || !membresia.productor) return null;
+  if (!membresia) return null;
 
-  const productor = Array.isArray(membresia.productor)
-    ? membresia.productor[0]
-    : membresia.productor;
+  const { data: productor } = await supabase
+    .from('productores')
+    .select('*')
+    .eq('id', productorActivoId)
+    .single();
+
+  if (!productor) return null;
 
   return {
     productor: productor as Productor,
@@ -87,24 +90,4 @@ export async function getProductorActivo(): Promise<{
   };
 }
 
-/**
- * Setea el productor activo en una cookie.
- */
-export async function setProductorActivo(productorId: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_PRODUCTOR_ACTIVO, productorId, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 días
-    path: '/',
-  });
-}
-
-/**
- * Limpia la cookie del productor activo.
- */
-export async function clearProductorActivo() {
-  const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_PRODUCTOR_ACTIVO);
-}
+export const COOKIE_NAME_PRODUCTOR_ACTIVO = COOKIE_PRODUCTOR_ACTIVO;

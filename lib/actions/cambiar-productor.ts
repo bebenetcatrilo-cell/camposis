@@ -1,14 +1,38 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
-import { setProductorActivo, clearProductorActivo } from '@/lib/productor-actual';
 import { revalidatePath } from 'next/cache';
 
+const COOKIE_PRODUCTOR_ACTIVO = 'campossis_productor_activo';
+
 /**
- * Selecciona un productor activo y redirige al /admin.
+ * Setea la cookie del productor activo.
  */
-export async function seleccionarProductorAction(productorId: string) {
+async function setearCookie(productorId: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_PRODUCTOR_ACTIVO, productorId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30,
+    path: '/',
+  });
+}
+
+/**
+ * Limpia la cookie.
+ */
+export async function limpiarCookieProductorAction() {
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_PRODUCTOR_ACTIVO);
+}
+
+/**
+ * Selecciona productor activo y redirige a /admin.
+ */
+export async function cambiarProductorAction(productorId: string) {
   if (!productorId) return { error: 'Falta el productor' };
 
   const supabase = await createClient();
@@ -30,22 +54,17 @@ export async function seleccionarProductorAction(productorId: string) {
     return { error: 'No tenés acceso a este productor' };
   }
 
-  await setProductorActivo(productorId);
+  await setearCookie(productorId);
   revalidatePath('/', 'layout');
   redirect('/admin');
 }
 
-/**
- * Cambia el productor activo (desde el switcher en la sidebar).
- */
-export async function cambiarProductorAction(productorId: string) {
-  return seleccionarProductorAction(productorId);
+export async function seleccionarProductorAction(productorId: string) {
+  return cambiarProductorAction(productorId);
 }
 
-/**
- * Vuelve al selector de productor.
- */
 export async function volverAlSelectorAction() {
-  await clearProductorActivo();
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_PRODUCTOR_ACTIVO);
   redirect('/auth/seleccionar-productor');
 }

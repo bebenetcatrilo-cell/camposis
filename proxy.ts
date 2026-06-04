@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+/**
+ * Extrae el slug del productor desde el hostname.
+ */
 function extraerSlugDeHost(host: string | null): string | null {
   if (!host) return null;
   const hostname = host.split(':')[0];
@@ -50,9 +53,13 @@ export async function proxy(request: NextRequest) {
   const esSubdominioProductor = slug !== null;
   const esRutaAdmin = pathname.startsWith('/admin');
   const esRutaSuperAdmin = pathname.startsWith('/super-admin');
+
+  // /auth/login y /auth/registro: solo si NO está logueado
+  // /auth/seleccionar-productor: SÍ requiere login (es parte del flujo post-login)
   const esRutaLoginRegistro =
     pathname === '/auth/login' || pathname === '/auth/registro';
 
+  // Super-admin: solo accesible desde dominio principal (no subdominio productor)
   if (esRutaSuperAdmin && esSubdominioProductor) {
     const url = request.nextUrl.clone();
     url.hostname = url.hostname.split('.').slice(1).join('.') || 'localhost';
@@ -60,6 +67,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // /admin y /super-admin requieren login
   if (!user && (esRutaAdmin || esRutaSuperAdmin)) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
@@ -67,7 +75,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Ya logueado pero en /auth/login o /auth/registro → buscar dónde mandarlo
+  // ⚠️ NO interceptamos /auth/seleccionar-productor (esa ruta sí necesita usuarios logueados)
   if (user && esRutaLoginRegistro) {
+    // Consultar el rol para decidir
     const { data: perfil } = await supabase
       .from('perfiles')
       .select('rol_perfil')
