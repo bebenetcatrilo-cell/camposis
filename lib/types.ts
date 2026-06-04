@@ -110,3 +110,29 @@ export interface ProductorContexto {
   productor: Productor;
   esPublico: boolean;
 }
+
+// ── BLOQUE 5: Productos ──
+export type TipoProducto = 'cereal' | 'hacienda';
+export type UnidadMedida = 'tn' | 'kg' | 'qq' | 'cabezas';
+export type SexoHacienda = 'macho' | 'hembra' | 'mixto';
+
+export interface Producto {
+  id: string;
+  productor_id: string;
+  tipo: TipoProducto;
+  nombre: string;
+  unidad: UnidadMedida;
+  activo: boolean;
+  observaciones: string | null;
+  especie: string | null;
+  variedad: string | null;
+  campania: string | null;
+  grado: string | null;
+  categoria: string | null;
+  raza: string | null;
+  sexo: SexoHacienda | null;
+  edad_aprox_meses: number | null;
+  peso_promedio_kg: number | null;
+  created_at: string;
+  updated_at: string;
+}
