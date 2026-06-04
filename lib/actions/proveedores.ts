@@ -5,7 +5,7 @@ import { getProductorActivo } from '@/lib/productor-actual';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-type CondIVA = 'responsable_inscripto' | 'monotributo' | 'exento' | 'consumidor_final' | 'no_categorizado';
+type CondIVA = 'ri' | 'monotributo' | 'exento' | 'consumidor_final' | 'no_categorizado';
 
 export async function crearProveedorAction(formData: FormData) {
   const ctx = await getProductorActivo();
@@ -16,7 +16,7 @@ export async function crearProveedorAction(formData: FormData) {
   if (!nombre) return { error: 'El nombre es obligatorio' };
 
   const cuit = String(formData.get('cuit') ?? '').trim() || null;
-  const condicion_iva = String(formData.get('condicion_iva') ?? 'responsable_inscripto') as CondIVA;
+  const condicion_iva = String(formData.get('condicion_iva') ?? 'ri') as CondIVA;
   const rubro = String(formData.get('rubro') ?? '').trim() || null;
   const email = String(formData.get('email') ?? '').trim() || null;
   const telefono = String(formData.get('telefono') ?? '').trim() || null;
@@ -68,7 +68,7 @@ export async function actualizarProveedorAction(id: string, formData: FormData) 
   const updates = {
     nombre,
     cuit: String(formData.get('cuit') ?? '').trim() || null,
-    condicion_iva: String(formData.get('condicion_iva') ?? 'responsable_inscripto') as CondIVA,
+    condicion_iva: String(formData.get('condicion_iva') ?? 'ri') as CondIVA,
     rubro: String(formData.get('rubro') ?? '').trim() || null,
     email: String(formData.get('email') ?? '').trim() || null,
     telefono: String(formData.get('telefono') ?? '').trim() || null,

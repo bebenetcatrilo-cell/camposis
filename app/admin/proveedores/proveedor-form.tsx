@@ -90,10 +90,10 @@ export function ProveedorForm({ proveedor }: Props) {
             <label className="block text-[11px] font-semibold text-[var(--fg-muted)] mb-1">Condición IVA</label>
             <select
               name="condicion_iva"
-              defaultValue={proveedor?.condicion_iva ?? 'responsable_inscripto'}
+              defaultValue={proveedor?.condicion_iva ?? 'ri'}
               className="w-full px-3 py-2 border border-[var(--border)] rounded-[6px] text-[13px] bg-white focus:outline-none focus:border-[var(--primary)]"
             >
-              <option value="responsable_inscripto">Responsable Inscripto</option>
+              <option value="ri">Responsable Inscripto</option>
               <option value="monotributo">Monotributo</option>
               <option value="exento">Exento</option>
               <option value="consumidor_final">Consumidor Final</option>

@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 type Params = Promise<{ id: string }>;
 
 const ivaLabels: Record<string, string> = {
-  responsable_inscripto: 'Responsable Inscripto',
+  ri: 'Responsable Inscripto',
   monotributo: 'Monotributo',
   exento: 'Exento',
   consumidor_final: 'Consumidor Final',
