@@ -19,7 +19,7 @@ export default async function AdminLayout({
   // Traer perfil + productor
   const { data: perfil } = await supabase
     .from('perfiles')
-    .select('nombre, rol, activo, productor_id, productores(nombre, nombre_campo, color_primario)')
+    .select('nombre, rol, activo, productor_id, productores(nombre, nombre_campo, color_primario, plan, estado_suscripcion, logo_url)')
     .eq('id', user.id)
     .single();
 
@@ -68,6 +68,9 @@ export default async function AdminLayout({
         nombreUsuario={perfil.nombre}
         rolLabel={rolLabel}
         nombreProductor={productor?.nombre_campo ?? productor?.nombre ?? null}
+        plan={productor?.plan ?? null}
+        estadoSuscripcion={productor?.estado_suscripcion ?? null}
+        logoUrl={productor?.logo_url ?? null}
       />
       <main className="flex-1 min-w-0">
         <MobileHeader
