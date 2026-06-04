@@ -136,3 +136,28 @@ export interface Producto {
   created_at: string;
   updated_at: string;
 }
+
+// ── BLOQUE 6: Clientes ──
+export type TipoCliente = 'acopio' | 'frigorifico' | 'proveedor' | 'particular' | 'otro';
+export type CondicionIva = 'ri' | 'monotributo' | 'exento' | 'consumidor_final' | 'no_categorizado';
+
+export interface Cliente {
+  id: string;
+  productor_id: string;
+  nombre: string;
+  tipo: TipoCliente;
+  cuit: string | null;
+  condicion_iva: CondicionIva;
+  email: string | null;
+  telefono: string | null;
+  whatsapp: string | null;
+  direccion: string | null;
+  localidad: string | null;
+  provincia: string | null;
+  cp: string | null;
+  saldo_cta_cte: number;
+  notas_internas: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+}
