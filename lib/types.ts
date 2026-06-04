@@ -161,3 +161,34 @@ export interface Cliente {
   created_at: string;
   updated_at: string;
 }
+
+// ── BLOQUE 7: Silos ──
+export type TipoSilo = 'aereo' | 'bolsa' | 'galpon' | 'tercero' | 'otro';
+export type TipoMovimientoSilo = 'entrada' | 'salida';
+
+export interface Silo {
+  id: string;
+  productor_id: string;
+  nombre: string;
+  tipo: TipoSilo;
+  ubicacion: string | null;
+  capacidad_tn: number | null;
+  observaciones: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MovimientoSilo {
+  id: string;
+  productor_id: string;
+  silo_id: string;
+  producto_id: string;
+  tipo: TipoMovimientoSilo;
+  cantidad_tn: number;
+  campania: string | null;
+  fecha: string;
+  observaciones: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
