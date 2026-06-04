@@ -11,6 +11,7 @@ import {
   FileText,
   Receipt,
   CreditCard,
+  Wallet,
   Settings,
   Crown,
   LogOut,
@@ -31,6 +32,7 @@ const menu = [
   { href: '/admin/presupuestos', label: 'Presupuestos', icon: FileText },
   { href: '/admin/facturas', label: 'Facturas', icon: Receipt },
   { href: '/admin/cheques', label: 'Cheques', icon: CreditCard },
+  { href: '/admin/cuentas-corrientes', label: 'Cta. Corriente', icon: Wallet },
   { href: '/admin/configuracion', label: 'Configuración', icon: Settings },
   { href: '/admin/suscripcion', label: 'Mi plan', icon: Crown },
 ];

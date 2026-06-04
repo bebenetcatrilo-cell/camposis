@@ -15,6 +15,7 @@ const menu = [
   { href: '/admin/presupuestos', label: '📋 Presupuestos' },
   { href: '/admin/facturas', label: '🧾 Facturas' },
   { href: '/admin/cheques', label: '💳 Cheques' },
+  { href: '/admin/cuentas-corrientes', label: '💰 Cta. Corriente' },
   { href: '/admin/configuracion', label: '⚙️ Configuración' },
   { href: '/admin/suscripcion', label: '💎 Mi plan' },
 ];
