@@ -192,3 +192,43 @@ export interface MovimientoSilo {
   registrado_por: string | null;
   created_at: string;
 }
+
+// ── BLOQUE 8: Presupuestos ──
+export type EstadoPresupuesto = 'pendiente' | 'aprobado' | 'rechazado' | 'facturado';
+
+export interface Presupuesto {
+  id: string;
+  productor_id: string;
+  numero: number;
+  fecha: string;
+  fecha_vencimiento: string | null;
+  cliente_id: string | null;
+  cliente_nombre: string;
+  cliente_cuit: string | null;
+  cliente_condicion_iva: string | null;
+  cliente_direccion: string | null;
+  cliente_localidad: string | null;
+  concepto: string | null;
+  subtotal: number;
+  iva_porcentaje: number;
+  iva_monto: number;
+  total: number;
+  estado: EstadoPresupuesto;
+  notas: string | null;
+  creado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ItemPresupuesto {
+  id: string;
+  presupuesto_id: string;
+  producto_id: string | null;
+  descripcion: string;
+  unidad: string | null;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+  orden: number;
+  created_at: string;
+}
