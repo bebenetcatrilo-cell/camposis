@@ -42,12 +42,12 @@ export default async function ProveedorDetallePage({ params }: { params: Params 
       <PageHeader
         title={prov.nombre}
         subtitle={prov.rubro || 'Proveedor'}
-        icon={<Truck className="w-5 h-5" />}
+        icon="🚚"
         breadcrumbs={[
           { label: 'Proveedores', href: '/admin/proveedores' },
           { label: prov.nombre },
         ]}
-        action={
+        actions={
           esAdmin && (
             <div className="flex gap-2">
               <ToggleActivoBtn id={prov.id} activo={prov.activo} />

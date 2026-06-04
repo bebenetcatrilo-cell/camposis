@@ -66,8 +66,8 @@ export default async function ProveedoresPage({
       <PageHeader
         title="Proveedores"
         subtitle="Quienes te venden insumos, servicios o productos"
-        icon={<Truck className="w-5 h-5" />}
-        action={
+        icon="🚚"
+        actions={
           <Link
             href="/admin/proveedores/nuevo"
             className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition text-[13px]"
@@ -83,25 +83,25 @@ export default async function ProveedoresPage({
         <KpiCard
           label="Total"
           value={String(total)}
-          icon={<Truck className="w-4 h-4" />}
+          icon={Truck}
           color="primary"
         />
         <KpiCard
           label="Activos"
           value={String(activos)}
-          icon={<CheckCircle2 className="w-4 h-4" />}
-          color="green"
+          icon={CheckCircle2}
+          color="emerald"
         />
         <KpiCard
           label="Inactivos"
           value={String(inactivos)}
-          icon={<AlertCircle className="w-4 h-4" />}
-          color="orange"
+          icon={AlertCircle}
+          color="amber"
         />
         <KpiCard
           label="Total a pagar"
           value={`$${formatARS(totalAPagar)}`}
-          icon={<DollarSign className="w-4 h-4" />}
+          icon={DollarSign}
           color="red"
         />
       </div>
@@ -164,18 +164,13 @@ export default async function ProveedoresPage({
       {/* Listado */}
       {!hayProveedores ? (
         <EmptyState
-          icon={<Truck className="w-6 h-6" />}
+          icon={Truck}
           title="Aún no tenés proveedores"
           description="Cargá tus proveedores para empezar a registrar compras y pagos."
-          action={
-            <Link
-              href="/admin/proveedores/nuevo"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition text-[13px]"
-            >
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
-              Crear primer proveedor
-            </Link>
-          }
+          action={{
+            label: '+ Crear primer proveedor',
+            href: '/admin/proveedores/nuevo',
+          }}
         />
       ) : (
         <div className="bg-white border border-[var(--border)] rounded-[12px] overflow-hidden shadow-[0_2px_4px_rgba(0,0,0,.06)]">

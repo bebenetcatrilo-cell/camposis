@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS proveedores (
   -- Identificación
   nombre TEXT NOT NULL,
   cuit TEXT,
-  condicion_iva condicion_iva NOT NULL DEFAULT 'responsable_inscripto',
+  condicion_iva condicion_iva NOT NULL DEFAULT 'ri',
 
   -- Categorización (texto libre)
   rubro TEXT,
@@ -74,9 +74,9 @@ FOR SELECT
 TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM membresias_productor m
+    SELECT 1 FROM miembros m
     WHERE m.productor_id = proveedores.productor_id
-      AND m.usuario_id = auth.uid()
+      AND m.perfil_id = auth.uid()
       AND m.activo = true
   )
 );
@@ -88,9 +88,9 @@ FOR ALL
 TO authenticated
 USING (
   EXISTS (
-    SELECT 1 FROM membresias_productor m
+    SELECT 1 FROM miembros m
     WHERE m.productor_id = proveedores.productor_id
-      AND m.usuario_id = auth.uid()
+      AND m.perfil_id = auth.uid()
       AND m.rol = 'admin_productor'
       AND m.activo = true
   )

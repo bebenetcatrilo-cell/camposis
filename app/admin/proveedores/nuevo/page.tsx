@@ -16,7 +16,7 @@ export default async function NuevoProveedorPage() {
       <PageHeader
         title="Nuevo proveedor"
         subtitle="Cargá los datos para empezar a registrar compras"
-        icon={<Truck className="w-5 h-5" />}
+        icon="🚚"
         breadcrumbs={[
           { label: 'Proveedores', href: '/admin/proveedores' },
           { label: 'Nuevo' },

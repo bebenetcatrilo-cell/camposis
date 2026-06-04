@@ -29,7 +29,7 @@ export default async function EditarProveedorPage({ params }: { params: Params }
     <div className="space-y-4">
       <PageHeader
         title={`Editar: ${prov.nombre}`}
-        icon={<Truck className="w-5 h-5" />}
+        icon="🚚"
         breadcrumbs={[
           { label: 'Proveedores', href: '/admin/proveedores' },
           { label: prov.nombre, href: `/admin/proveedores/${id}` },
