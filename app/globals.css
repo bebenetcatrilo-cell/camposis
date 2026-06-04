@@ -1,35 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  /* Verde pasto: paleta agro */
-  --verde-profundo: #2d4a1a;
-  --verde-pasto:    #4a7c2a;
-  --verde-claro:    #7ba85d;
-  --verde-mate:     #5b8044;
+  /* ─── PALETA AGRO ─── */
+  --verde-profundo: #1f5128;
+  --verde-pasto:    #2e7d32;
+  --verde-claro:    #66bb6a;
+  --verde-mate:     #3d6b3d;
 
-  --crema:          #f5f0e6;
-  --crema-suave:    #fbf8f1;
-  --trigo:          #d4b87a;
-  --trigo-oscuro:   #a8884f;
-
-  --tierra:         #6b4423;
-  --carbon:         #1f2419;
-  --carbon-suave:   #3a3d33;
-
-  /* Tokens semánticos */
-  --bg:         #f6f8fb;
+  /* ─── TOKENS SEMÁNTICOS ─── */
+  --bg:         #f7f8fa;      /* Fondo principal más limpio */
   --bg-sidebar: #ffffff;
   --bg-card:    #ffffff;
-  --bg-hover:   #f1f4f9;
-  --border:     #e6eaf0;
+  --bg-hover:   #f1f3f7;
+  --border:     #e4e7ed;       /* Más sutil */
 
-  --fg:         #1f2419;
+  --fg:         #0f1419;       /* Negro suave */
   --fg-muted:   #64748b;
   --fg-subtle:  #94a3b8;
 
-  --primary:    #4a7c2a;   /* verde pasto */
-  --primary-h:  #2d4a1a;   /* verde profundo */
-  --primary-bg: rgba(74, 124, 42, .10);
+  --primary:    #2e7d32;       /* Verde más institucional */
+  --primary-h:  #1f5128;
+  --primary-bg: rgba(46, 125, 50, .08);
 
   --green:      #059669;
   --green-bg:   rgba(16, 185, 129, .12);
@@ -72,6 +63,7 @@ html, body {
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-family: var(--font-sans);
 }
 
 .mono {
@@ -79,13 +71,19 @@ html, body {
   font-feature-settings: "tnum";
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--fg-subtle); }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ─── SCROLLBAR SUAVE ─── */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-.fade-up { animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) both; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

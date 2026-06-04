@@ -62,9 +62,9 @@ export default async function AdminLayout({
           nombreProductor={productor.nombre_campo ?? productor.nombre}
         />
         <div className="hidden lg:block">
-          <Topbar />
+          <Topbar nombreUsuario={perfil.nombre} rolLabel={rolLabel} />
         </div>
-        <div className="p-4 md:p-7">{children}</div>
+        <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">{children}</div>
       </main>
     </div>
   );
