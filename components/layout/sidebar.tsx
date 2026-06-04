@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import {
   LayoutDashboard,
   Users,
+  Truck,
   Package,
   Wheat,
   FileText,
@@ -28,6 +29,7 @@ import type { MembresiaConProductor } from '@/lib/types';
 const menuPrincipal = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/clientes', label: 'Clientes', icon: Users },
+  { href: '/admin/proveedores', label: 'Proveedores', icon: Truck },
   { href: '/admin/productos', label: 'Productos', icon: Package },
   { href: '/admin/silos', label: 'Silos', icon: Wheat },
   { href: '/admin/presupuestos', label: 'Presupuestos', icon: FileText },
