@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Wheat, Package, Scale, Plus } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const TIPOS: Record<string, { label: string; icon: string }> = {
   aereo: { label: 'Aéreo', icon: '🏗️' },
@@ -23,27 +27,24 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
 
   const supabase = await createClient();
 
-  let query = supabase
-    .from('silos')
-    .select('*')
-    .eq('productor_id', ctx.productor.id);
-
+  let query = supabase.from('silos').select('*').eq('productor_id', ctx.productor.id);
   if (!mostrarInactivos) query = query.eq('activo', true);
   if (q) query = query.or(`nombre.ilike.%${q}%,ubicacion.ilike.%${q}%`);
 
   const { data: silos } = await query.order('nombre');
 
-  // Stock total por silo
   const { data: stockTotal } = await supabase
     .from('stock_silos_total')
     .select('silo_id, stock_total_tn')
     .eq('productor_id', ctx.productor.id);
 
   const stockMap = new Map(
-    (stockTotal ?? []).map((s: { silo_id: string; stock_total_tn: number | null }) => [s.silo_id, Number(s.stock_total_tn ?? 0)])
+    (stockTotal ?? []).map((s: { silo_id: string; stock_total_tn: number | null }) => [
+      s.silo_id,
+      Number(s.stock_total_tn ?? 0),
+    ])
   );
 
-  // Stock detallado por producto
   const { data: stockDetalle } = await supabase
     .from('stock_silos')
     .select('*')
@@ -59,46 +60,43 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
 
   const stockPorSilo = new Map<string, StockRow[]>();
   for (const s of (stockDetalle ?? []) as StockRow[]) {
-    const arr = stockPorSilo.get(s.silo_id) ?? [];
     if (Number(s.stock_actual_tn) > 0) {
+      const arr = stockPorSilo.get(s.silo_id) ?? [];
       arr.push(s);
       stockPorSilo.set(s.silo_id, arr);
     }
   }
 
-  // KPIs globales
   const totalSilos = silos?.length ?? 0;
   const stockGlobal = Array.from(stockMap.values()).reduce((s, v) => s + v, 0);
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1
-            className="text-3xl tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)' }}
+      <PageHeader
+        title="Silos"
+        icon="🌾"
+        subtitle="Stock de cereal por silo y campaña"
+        actions={
+          <Link
+            href="/admin/silos/nuevo"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
           >
-            🌾 Silos
-          </h1>
-          <p className="text-[var(--fg-muted)] mt-1">
-            Stock de cereal por silo y campaña
-          </p>
-        </div>
-        <Link
-          href="/admin/silos/nuevo"
-          className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
-        >
-          + Nuevo silo
-        </Link>
-      </header>
+            <Plus className="w-4 h-4" strokeWidth={2.4} />
+            Nuevo silo
+          </Link>
+        }
+      />
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 gap-3">
-        <Card label="Silos activos" value={String(totalSilos)} icon="📦" />
-        <Card label="Stock total" value={`${stockGlobal.toFixed(2)} tn`} icon="⚖️" />
+        <KpiCard label="Silos activos" value={String(totalSilos)} icon={Package} color="primary" />
+        <KpiCard
+          label="Stock total"
+          value={`${stockGlobal.toFixed(2)} tn`}
+          icon={Scale}
+          color="emerald"
+        />
       </div>
 
-      {/* Filtros */}
       <form
         method="get"
         className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm flex flex-wrap gap-3 items-end"
@@ -136,27 +134,13 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
         </button>
       </form>
 
-      {/* Cards de silos */}
       {!silos || silos.length === 0 ? (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-          <div className="text-5xl mb-3">🌾</div>
-          <h2 className="text-lg font-bold">
-            {q ? 'Sin resultados' : 'No tenés silos cargados'}
-          </h2>
-          {!q && (
-            <>
-              <p className="text-[var(--fg-muted)] text-sm mt-2">
-                Creá tu primer silo para empezar a registrar stock.
-              </p>
-              <Link
-                href="/admin/silos/nuevo"
-                className="inline-block mt-4 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition text-sm"
-              >
-                + Crear el primero
-              </Link>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={Wheat}
+          title={q ? 'Sin resultados' : 'No tenés silos cargados'}
+          description={!q ? 'Creá tu primer silo para empezar a registrar stock.' : undefined}
+          action={!q ? { label: '+ Crear el primero', href: '/admin/silos/nuevo' } : undefined}
+        />
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {silos.map((s) => {
@@ -178,7 +162,8 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
                       {tipo.icon} {s.nombre}
                     </h3>
                     <p className="text-xs text-[var(--fg-muted)] mt-0.5">
-                      {tipo.label}{s.ubicacion ? ` · ${s.ubicacion}` : ''}
+                      {tipo.label}
+                      {s.ubicacion ? ` · ${s.ubicacion}` : ''}
                     </p>
                   </div>
                   {!s.activo && (
@@ -188,13 +173,12 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
                   )}
                 </div>
 
-                {/* Stock total */}
                 <div className="mb-3">
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs uppercase tracking-wider text-[var(--fg-muted)] font-semibold">
                       Stock total
                     </span>
-                    <span className="text-xl font-extrabold text-[var(--primary)]">
+                    <span className="text-xl font-extrabold text-[var(--primary)] mono">
                       {stockTotal.toFixed(2)} tn
                     </span>
                   </div>
@@ -206,9 +190,11 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
                       <div className="mt-2 h-2 bg-[var(--bg-hover)] rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all ${
-                            (porcentaje ?? 0) > 90 ? 'bg-red-500'
-                            : (porcentaje ?? 0) > 70 ? 'bg-amber-500'
-                            : 'bg-[var(--primary)]'
+                            (porcentaje ?? 0) > 90
+                              ? 'bg-red-500'
+                              : (porcentaje ?? 0) > 70
+                              ? 'bg-amber-500'
+                              : 'bg-[var(--primary)]'
                           }`}
                           style={{ width: `${porcentaje ?? 0}%` }}
                         />
@@ -217,7 +203,6 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
                   )}
                 </div>
 
-                {/* Productos */}
                 {productos.length > 0 ? (
                   <div className="border-t border-[var(--border)] pt-3 space-y-1">
                     {productos.map((p, i) => (
@@ -244,22 +229,6 @@ export default async function SilosPage({ searchParams }: { searchParams: SP }) 
           })}
         </div>
       )}
-    </div>
-  );
-}
-
-function Card({ label, value, icon }: { label: string; value: string; icon: string }) {
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wider font-semibold">
-            {label}
-          </div>
-          <div className="text-lg font-extrabold mt-0.5 truncate">{value}</div>
-        </div>
-      </div>
     </div>
   );
 }

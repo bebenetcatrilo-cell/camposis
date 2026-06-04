@@ -4,19 +4,22 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CambiarEstadoFactura } from './cambiar-estado';
 import { formatARS, formatFecha } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { Edit3, FileText, User, Hash, Calendar } from 'lucide-react';
 
-const TIPOS: Record<string, { label: string; color: string }> = {
-  A: { label: 'Factura A', color: 'bg-blue-100 text-blue-700' },
-  B: { label: 'Factura B', color: 'bg-emerald-100 text-emerald-700' },
-  C: { label: 'Factura C', color: 'bg-purple-100 text-purple-700' },
-  X: { label: 'Recibo X', color: 'bg-gray-100 text-gray-700' },
+const TIPOS: Record<string, { label: string; color: 'blue' | 'emerald' | 'purple' | 'gray' }> = {
+  A: { label: 'Factura A', color: 'blue' },
+  B: { label: 'Factura B', color: 'emerald' },
+  C: { label: 'Factura C', color: 'purple' },
+  X: { label: 'Recibo X', color: 'gray' },
 };
 
-const ESTADOS: Record<string, { label: string; icon: string; bg: string; text: string }> = {
-  borrador: { label: 'Borrador', icon: '📝', bg: 'bg-gray-100', text: 'text-gray-700' },
-  emitida: { label: 'Emitida', icon: '🧾', bg: 'bg-amber-100', text: 'text-amber-700' },
-  cobrada: { label: 'Cobrada', icon: '✓', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  anulada: { label: 'Anulada', icon: '✗', bg: 'bg-red-100', text: 'text-red-700' },
+const ESTADOS: Record<string, { label: string; icon: string; color: 'gray' | 'amber' | 'emerald' | 'red' }> = {
+  borrador: { label: 'Borrador', icon: '📝', color: 'gray' },
+  emitida: { label: 'Emitida', icon: '🧾', color: 'amber' },
+  cobrada: { label: 'Cobrada', icon: '✓', color: 'emerald' },
+  anulada: { label: 'Anulada', icon: '✗', color: 'red' },
 };
 
 const FORMA_PAGO_LABEL: Record<string, string> = {
@@ -54,129 +57,149 @@ export default async function FacturaDetallePage({
     .eq('factura_id', id)
     .order('orden');
 
-  const tipoInfo = TIPOS[fact.tipo] ?? { label: fact.tipo, color: 'bg-gray-100' };
+  const tipoInfo = TIPOS[fact.tipo] ?? { label: fact.tipo, color: 'gray' as const };
   const est = ESTADOS[fact.estado] ?? ESTADOS.borrador;
   const numeroFmt = `${fact.punto_venta}-${String(fact.numero).padStart(8, '0')}`;
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <header>
-        <Link
-          href="/admin/facturas"
-          className="text-sm text-[var(--fg-muted)] hover:text-[var(--primary)]"
-        >
-          ← Volver a facturas
-        </Link>
-        <div className="flex items-start justify-between gap-4 flex-wrap mt-2">
-          <div>
-            <h1
-              className="text-3xl tracking-tight flex items-center gap-3 flex-wrap"
-              style={{ fontFamily: 'var(--font-serif)' }}
-            >
-              <span className={`inline-block px-3 py-1 rounded text-base font-bold ${tipoInfo.color}`}>
-                {tipoInfo.label}
-              </span>
-              <span className="font-mono text-2xl">{numeroFmt}</span>
-              <span className={`inline-block px-3 py-1 rounded text-sm font-semibold ${est.bg} ${est.text}`}>
-                {est.icon} {est.label}
-              </span>
-            </h1>
-            <p className="text-[var(--fg-muted)] mt-1">
-              {formatFecha(fact.fecha)} · {fact.cliente_nombre}
-            </p>
+    <div className="space-y-6 max-w-5xl">
+      <PageHeader
+        title={numeroFmt}
+        icon="🧾"
+        subtitle={`${formatFecha(fact.fecha)} · ${fact.cliente_nombre}`}
+        backHref="/admin/facturas"
+        backLabel="Volver a facturas"
+        badge={
+          <div className="flex gap-2 flex-wrap">
+            <StatusBadge label={tipoInfo.label} color={tipoInfo.color} size="md" />
+            <StatusBadge label={est.label} icon={est.icon} color={est.color} size="md" />
           </div>
+        }
+        actions={
           <div className="flex gap-2 flex-wrap">
             <CambiarEstadoFactura id={fact.id} estado={fact.estado} cae={fact.cae} />
             {fact.estado === 'borrador' && (
               <Link
                 href={`/admin/facturas/${fact.id}/editar`}
-                className="px-4 py-2 border border-[var(--border)] rounded-lg font-medium hover:bg-[var(--bg-hover)] transition text-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-2 border border-[var(--border)] rounded-lg font-medium hover:bg-[var(--bg-hover)] transition text-sm"
               >
-                ✏️ Editar
+                <Edit3 className="w-3.5 h-3.5" strokeWidth={2} />
+                Editar
               </Link>
             )}
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Cliente */}
-      <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm">
-        <h2 className="font-bold text-sm uppercase tracking-wider text-[var(--fg-muted)] mb-3">
-          👤 Cliente
-        </h2>
+      <section className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <User className="w-4 h-4 text-[var(--fg-muted)]" strokeWidth={1.8} />
+          <h2 className="text-[11px] uppercase tracking-[.18em] text-[var(--fg-muted)] font-bold">
+            Cliente
+          </h2>
+        </div>
         <div className="grid md:grid-cols-2 gap-3 text-sm">
           <div>
             <p className="font-bold text-base">{fact.cliente_nombre}</p>
             {fact.cliente_cuit && (
-              <p className="text-[var(--fg-muted)]">CUIT: {fact.cliente_cuit}</p>
+              <p className="text-[var(--fg-muted)] text-xs mt-1">
+                CUIT: <span className="font-mono">{fact.cliente_cuit}</span>
+              </p>
             )}
             {fact.cliente_condicion_iva && (
-              <p className="text-[var(--fg-muted)]">IVA: {fact.cliente_condicion_iva}</p>
+              <p className="text-[var(--fg-muted)] text-xs">
+                IVA: {fact.cliente_condicion_iva}
+              </p>
             )}
           </div>
           <div>
-            {fact.cliente_direccion && <p>{fact.cliente_direccion}</p>}
+            {fact.cliente_direccion && <p className="text-sm">{fact.cliente_direccion}</p>}
             {fact.cliente_localidad && (
-              <p className="text-[var(--fg-muted)]">{fact.cliente_localidad}</p>
+              <p className="text-[var(--fg-muted)] text-xs">{fact.cliente_localidad}</p>
             )}
           </div>
         </div>
         {fact.concepto && (
-          <div className="mt-3 pt-3 border-t border-[var(--border)]">
-            <p className="text-xs uppercase tracking-wider text-[var(--fg-muted)] font-semibold mb-1">Concepto</p>
+          <div className="mt-4 pt-3 border-t border-[var(--border)]">
+            <p className="text-[10px] uppercase tracking-[.18em] text-[var(--fg-muted)] font-bold mb-1">
+              Concepto
+            </p>
             <p className="text-sm">{fact.concepto}</p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* CAE */}
       {(fact.cae || fact.estado === 'emitida') && (
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-blue-900 mb-2">
-            🔢 CAE
-          </h2>
+        <section
+          className={`border rounded-2xl p-5 ${
+            fact.cae ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200'
+          }`}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Hash className={`w-4 h-4 ${fact.cae ? 'text-blue-700' : 'text-amber-700'}`} strokeWidth={1.8} />
+            <h2
+              className={`text-[11px] uppercase tracking-[.18em] font-bold ${
+                fact.cae ? 'text-blue-900' : 'text-amber-900'
+              }`}
+            >
+              CAE
+            </h2>
+          </div>
           {fact.cae ? (
             <div className="text-sm text-blue-900">
-              <p>Nº CAE: <strong className="font-mono">{fact.cae}</strong></p>
+              <p>
+                Nº: <strong className="font-mono">{fact.cae}</strong>
+              </p>
               {fact.cae_vencimiento && (
                 <p className="text-xs mt-1">Vence: {formatFecha(fact.cae_vencimiento)}</p>
               )}
             </div>
           ) : (
             <p className="text-sm text-amber-800">
-              ⚠️ Falta cargar el CAE. Emití la factura en ARCA y después cargá el número acá.
+              ⚠️ Falta cargar el CAE. Emití la factura en ARCA y después cargá el número.
             </p>
           )}
-        </div>
+        </section>
       )}
 
-      {/* Ítems */}
-      <div className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-5 py-3 border-b border-[var(--border)]">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-[var(--fg-muted)]">
-            🛒 Ítems ({items?.length ?? 0})
+      {/* Items */}
+      <section className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--border)] flex items-center gap-2">
+          <FileText className="w-4 h-4 text-[var(--fg-muted)]" strokeWidth={1.8} />
+          <h2 className="text-[11px] uppercase tracking-[.18em] text-[var(--fg-muted)] font-bold">
+            Ítems ({items?.length ?? 0})
           </h2>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-[var(--bg-hover)] text-xs uppercase tracking-wider text-[var(--fg-muted)]">
+          <thead className="bg-[var(--bg-hover)]">
             <tr>
-              <th className="px-5 py-2.5 text-left font-semibold">Descripción</th>
-              <th className="px-5 py-2.5 text-right font-semibold">Cantidad</th>
-              <th className="px-5 py-2.5 text-right font-semibold">P. Unit.</th>
-              <th className="px-5 py-2.5 text-right font-semibold">Subtotal</th>
+              <th className="px-5 py-2.5 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                Descripción
+              </th>
+              <th className="px-5 py-2.5 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                Cantidad
+              </th>
+              <th className="px-5 py-2.5 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                P. Unit.
+              </th>
+              <th className="px-5 py-2.5 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                Subtotal
+              </th>
             </tr>
           </thead>
           <tbody>
             {(items ?? []).map((it) => (
               <tr key={it.id} className="border-t border-[var(--border)]">
                 <td className="px-5 py-3">{it.descripcion}</td>
-                <td className="px-5 py-3 text-right font-mono">
+                <td className="px-5 py-3 text-right font-mono text-xs">
                   {Number(it.cantidad).toFixed(2)} {it.unidad ?? ''}
                 </td>
                 <td className="px-5 py-3 text-right font-mono">
                   ${formatARS(Number(it.precio_unitario))}
                 </td>
-                <td className="px-5 py-3 text-right font-mono font-semibold">
+                <td className="px-5 py-3 text-right font-mono font-bold">
                   ${formatARS(Number(it.subtotal))}
                 </td>
               </tr>
@@ -185,67 +208,72 @@ export default async function FacturaDetallePage({
         </table>
         <div className="border-t border-[var(--border)] p-5 space-y-2 bg-[var(--bg-hover)]">
           <div className="flex justify-between text-sm">
-            <span>Subtotal</span>
-            <span className="font-semibold">${formatARS(Number(fact.subtotal))}</span>
+            <span className="text-[var(--fg-muted)]">Subtotal</span>
+            <span className="font-semibold font-mono">${formatARS(Number(fact.subtotal))}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span>IVA ({fact.iva_porcentaje}%)</span>
-            <span className="font-semibold">${formatARS(Number(fact.iva_monto))}</span>
+            <span className="text-[var(--fg-muted)]">IVA ({fact.iva_porcentaje}%)</span>
+            <span className="font-semibold font-mono">${formatARS(Number(fact.iva_monto))}</span>
           </div>
-          <div className="flex justify-between text-lg font-extrabold border-t-2 border-[var(--border)] pt-2">
+          <div className="flex justify-between text-xl font-extrabold border-t-2 border-[var(--border)] pt-3 mt-2">
             <span>TOTAL</span>
-            <span className="text-[var(--primary)]">${formatARS(Number(fact.total))}</span>
+            <span className="text-[var(--primary)] font-mono">
+              ${formatARS(Number(fact.total))}
+            </span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Datos de cobro */}
       {fact.estado === 'cobrada' && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-emerald-900 mb-2">
-            ✓ Cobro
-          </h2>
+        <section className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-emerald-700">✓</span>
+            <h2 className="text-[11px] uppercase tracking-[.18em] text-emerald-900 font-bold">
+              Cobro registrado
+            </h2>
+          </div>
           <div className="grid md:grid-cols-3 gap-3 text-sm">
             {fact.forma_pago && (
               <div>
-                <p className="text-xs text-[var(--fg-muted)]">Forma de pago</p>
+                <p className="text-xs text-emerald-700/70">Forma de pago</p>
                 <p className="font-semibold">{FORMA_PAGO_LABEL[fact.forma_pago] ?? fact.forma_pago}</p>
               </div>
             )}
             {fact.fecha_cobro && (
               <div>
-                <p className="text-xs text-[var(--fg-muted)]">Fecha de cobro</p>
+                <p className="text-xs text-emerald-700/70">Fecha</p>
                 <p className="font-semibold">{formatFecha(fact.fecha_cobro)}</p>
               </div>
             )}
             {fact.observaciones_cobro && (
               <div className="md:col-span-3">
-                <p className="text-xs text-[var(--fg-muted)]">Observaciones</p>
+                <p className="text-xs text-emerald-700/70">Observaciones</p>
                 <p className="text-sm">{fact.observaciones_cobro}</p>
               </div>
             )}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Datos de anulación */}
+      {/* Anulación */}
       {fact.estado === 'anulada' && fact.observaciones_cobro && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-red-900 mb-1">
-            ✗ Motivo de anulación
+        <section className="bg-red-50 border border-red-200 rounded-2xl p-4">
+          <h2 className="text-[11px] uppercase tracking-[.18em] text-red-900 font-bold mb-1">
+            Motivo de anulación
           </h2>
           <p className="text-sm text-red-800">{fact.observaciones_cobro}</p>
-        </div>
+        </section>
       )}
 
       {/* Notas */}
       {fact.notas && (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-[var(--fg-muted)] mb-2">
-            📝 Notas
+        <section className="bg-white border border-[var(--border)] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] uppercase tracking-[.18em] text-[var(--fg-muted)] font-bold mb-2">
+            Notas
           </h2>
           <p className="text-sm whitespace-pre-wrap">{fact.notas}</p>
-        </div>
+        </section>
       )}
 
       {/* Presupuesto origen */}
@@ -253,7 +281,7 @@ export default async function FacturaDetallePage({
         <div className="text-sm">
           <Link
             href={`/admin/presupuestos/${fact.presupuesto_id}`}
-            className="text-[var(--primary)] hover:underline"
+            className="text-[var(--primary)] hover:underline inline-flex items-center gap-1"
           >
             📋 Ver presupuesto de origen →
           </Link>
@@ -261,11 +289,9 @@ export default async function FacturaDetallePage({
       )}
 
       {/* Tracking */}
-      <div className="text-xs text-[var(--fg-muted)]">
+      <div className="text-xs text-[var(--fg-muted)] flex items-center gap-1">
+        <Calendar className="w-3 h-3" strokeWidth={1.6} />
         Creada: {new Date(fact.created_at).toLocaleString('es-AR')}
-        {fact.updated_at !== fact.created_at && (
-          <> · Modificada: {new Date(fact.updated_at).toLocaleString('es-AR')}</>
-        )}
       </div>
     </div>
   );

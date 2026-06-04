@@ -2,20 +2,25 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Receipt, FileText, CheckCircle, DollarSign, Plus, AlertCircle } from 'lucide-react';
 import { formatARS, formatFecha } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
 
-const TIPOS: Record<string, { label: string; color: string }> = {
-  A: { label: 'Factura A', color: 'bg-blue-100 text-blue-700' },
-  B: { label: 'Factura B', color: 'bg-emerald-100 text-emerald-700' },
-  C: { label: 'Factura C', color: 'bg-purple-100 text-purple-700' },
-  X: { label: 'Recibo X', color: 'bg-gray-100 text-gray-700' },
+const TIPOS: Record<string, { label: string; color: 'blue' | 'emerald' | 'purple' | 'gray' }> = {
+  A: { label: 'Factura A', color: 'blue' },
+  B: { label: 'Factura B', color: 'emerald' },
+  C: { label: 'Factura C', color: 'purple' },
+  X: { label: 'Recibo X', color: 'gray' },
 };
 
-const ESTADOS: Record<string, { label: string; icon: string; bg: string; text: string }> = {
-  borrador: { label: 'Borrador', icon: '📝', bg: 'bg-gray-100', text: 'text-gray-700' },
-  emitida: { label: 'Emitida', icon: '🧾', bg: 'bg-amber-100', text: 'text-amber-700' },
-  cobrada: { label: 'Cobrada', icon: '✓', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  anulada: { label: 'Anulada', icon: '✗', bg: 'bg-red-100', text: 'text-red-700' },
+const ESTADOS: Record<string, { label: string; icon: string; color: 'gray' | 'amber' | 'emerald' | 'red' }> = {
+  borrador: { label: 'Borrador', icon: '📝', color: 'gray' },
+  emitida: { label: 'Pendiente', icon: '⏳', color: 'amber' },
+  cobrada: { label: 'Cobrada', icon: '✓', color: 'emerald' },
+  anulada: { label: 'Anulada', icon: '✗', color: 'red' },
 };
 
 type SP = Promise<{ q?: string; estado?: string; tipo?: string }>;
@@ -62,32 +67,48 @@ export default async function FacturasPage({ searchParams }: { searchParams: SP 
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1
-            className="text-3xl tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)' }}
+      <PageHeader
+        title="Facturas"
+        icon="🧾"
+        subtitle={`Comprobantes emitidos · Punto de venta: ${ctx.productor.punto_venta || '0001'}`}
+        actions={
+          <Link
+            href="/admin/facturas/nuevo"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
           >
-            🧾 Facturas
-          </h1>
-          <p className="text-[var(--fg-muted)] mt-1">
-            Comprobantes emitidos · Punto de venta: <strong>{ctx.productor.punto_venta || '0001'}</strong>
-          </p>
-        </div>
-        <Link
-          href="/admin/facturas/nuevo"
-          className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
-        >
-          + Nueva factura
-        </Link>
-      </header>
+            <Plus className="w-4 h-4" strokeWidth={2.4} />
+            Nueva factura
+          </Link>
+        }
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card label="Emitidas pendientes" value={String(kpis.emitidas)} icon="🧾" />
-        <Card label="A cobrar" value={formatARS(kpis.monto_emitido)} icon="💰" color="text-amber-700" />
-        <Card label="Cobradas" value={String(kpis.cobradas)} icon="✓" color="text-emerald-700" />
-        <Card label="Total cobrado" value={formatARS(kpis.monto_cobrado)} icon="💵" color="text-emerald-700" />
+        <KpiCard
+          label="Pendientes"
+          value={String(kpis.emitidas)}
+          sub={`$${formatARS(kpis.monto_emitido)}`}
+          icon={FileText}
+          color="amber"
+        />
+        <KpiCard
+          label="A cobrar"
+          value={`$${formatARS(kpis.monto_emitido)}`}
+          icon={AlertCircle}
+          color="red"
+        />
+        <KpiCard
+          label="Cobradas"
+          value={String(kpis.cobradas)}
+          icon={CheckCircle}
+          color="emerald"
+        />
+        <KpiCard
+          label="Total cobrado"
+          value={`$${formatARS(kpis.monto_cobrado)}`}
+          icon={DollarSign}
+          color="primary"
+        />
       </div>
 
       {/* Filtros */}
@@ -134,7 +155,7 @@ export default async function FacturasPage({ searchParams }: { searchParams: SP 
           >
             <option value="todos">Todos</option>
             <option value="borrador">📝 Borrador</option>
-            <option value="emitida">🧾 Emitidas</option>
+            <option value="emitida">⏳ Pendientes</option>
             <option value="cobrada">✓ Cobradas</option>
             <option value="anulada">✗ Anuladas</option>
           </select>
@@ -157,52 +178,49 @@ export default async function FacturasPage({ searchParams }: { searchParams: SP 
 
       {/* Tabla */}
       {!facturas || facturas.length === 0 ? (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-          <div className="text-5xl mb-3">🧾</div>
-          <h2 className="text-lg font-bold">
-            {q || estado !== 'todos' || tipo !== 'todos' ? 'Sin resultados' : 'No tenés facturas'}
-          </h2>
-          {!q && estado === 'todos' && tipo === 'todos' && (
-            <>
-              <p className="text-[var(--fg-muted)] text-sm mt-2">
-                Creá tu primera factura.
-              </p>
-              <Link
-                href="/admin/facturas/nuevo"
-                className="inline-block mt-4 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition text-sm"
-              >
-                + Crear la primera
-              </Link>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={Receipt}
+          title={
+            q || estado !== 'todos' || tipo !== 'todos'
+              ? 'Sin resultados'
+              : 'No tenés facturas todavía'
+          }
+          description={
+            !q && estado === 'todos' && tipo === 'todos'
+              ? 'Creá tu primera factura para empezar a registrar tus ventas.'
+              : undefined
+          }
+          action={
+            !q && estado === 'todos' && tipo === 'todos'
+              ? { label: '+ Crear primera factura', href: '/admin/facturas/nuevo' }
+              : undefined
+          }
+        />
       ) : (
         <div className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-hover)] text-xs uppercase tracking-wider text-[var(--fg-muted)]">
+              <thead className="bg-[var(--bg-hover)]">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Tipo</th>
-                  <th className="px-5 py-3 text-left font-semibold">Nº</th>
-                  <th className="px-5 py-3 text-left font-semibold">Fecha</th>
-                  <th className="px-5 py-3 text-left font-semibold">Cliente</th>
-                  <th className="px-5 py-3 text-left font-semibold">Concepto</th>
-                  <th className="px-5 py-3 text-right font-semibold">Total</th>
-                  <th className="px-5 py-3 text-left font-semibold">Estado</th>
-                  <th className="px-5 py-3 text-center font-semibold">CAE</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Tipo</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Nº</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Fecha</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Cliente</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Concepto</th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Total</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Estado</th>
+                  <th className="px-5 py-3 text-center text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">CAE</th>
                 </tr>
               </thead>
               <tbody>
                 {facturas.map((f) => {
-                  const tipoInfo = TIPOS[f.tipo] ?? { label: f.tipo, color: 'bg-gray-100' };
+                  const tipoInfo = TIPOS[f.tipo] ?? { label: f.tipo, color: 'gray' as const };
                   const est = ESTADOS[f.estado] ?? ESTADOS.borrador;
                   const numeroFmt = `${f.punto_venta}-${String(f.numero).padStart(8, '0')}`;
                   return (
-                    <tr key={f.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)]">
+                    <tr key={f.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)] transition">
                       <td className="px-5 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${tipoInfo.color}`}>
-                          {tipoInfo.label}
-                        </span>
+                        <StatusBadge label={tipoInfo.label} color={tipoInfo.color} />
                       </td>
                       <td className="px-5 py-3">
                         <Link
@@ -212,26 +230,24 @@ export default async function FacturasPage({ searchParams }: { searchParams: SP 
                           {numeroFmt}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 text-xs">{formatFecha(f.fecha)}</td>
+                      <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{formatFecha(f.fecha)}</td>
                       <td className="px-5 py-3 font-medium">{f.cliente_nombre}</td>
                       <td className="px-5 py-3 text-[var(--fg-muted)] max-w-[200px] truncate">
                         {f.concepto ?? '—'}
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold">
-                        {formatARS(Number(f.total))}
+                      <td className="px-5 py-3 text-right font-bold mono">
+                        ${formatARS(Number(f.total))}
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${est.bg} ${est.text}`}>
-                          {est.icon} {est.label}
-                        </span>
+                        <StatusBadge label={est.label} icon={est.icon} color={est.color} />
                       </td>
                       <td className="px-5 py-3 text-center">
                         {f.cae ? (
-                          <span className="text-xs text-emerald-700" title={f.cae}>✓</span>
+                          <span className="text-emerald-700" title={f.cae}>✓</span>
                         ) : f.tipo !== 'X' && f.estado === 'emitida' ? (
-                          <span className="text-xs text-amber-600" title="Falta cargar CAE">⚠</span>
+                          <span className="text-amber-600" title="Falta cargar CAE">⚠</span>
                         ) : (
-                          <span className="text-xs text-[var(--fg-muted)]">—</span>
+                          <span className="text-[var(--fg-muted)]">—</span>
                         )}
                       </td>
                     </tr>
@@ -242,22 +258,6 @@ export default async function FacturasPage({ searchParams }: { searchParams: SP 
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Card({ label, value, icon, color = '' }: { label: string; value: string; icon: string; color?: string }) {
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wider font-semibold">
-            {label}
-          </div>
-          <div className={`text-lg font-extrabold mt-0.5 truncate ${color}`}>{value}</div>
-        </div>
-      </div>
     </div>
   );
 }

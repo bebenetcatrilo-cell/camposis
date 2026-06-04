@@ -2,8 +2,12 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Users, TrendingUp, TrendingDown, Wallet, Plus, MessageCircle, Mail, Phone } from 'lucide-react';
 import { TogglerActivo } from './toggler';
 import { formatARS } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 type SearchParams = Promise<{
   tipo?: string;
@@ -47,19 +51,12 @@ export default async function ClientesPage({
     .select('*')
     .eq('productor_id', ctx.productor.id);
 
-  if (tipoFiltro !== 'todos') {
-    query = query.eq('tipo', tipoFiltro);
-  }
-  if (!mostrarInactivos) {
-    query = query.eq('activo', true);
-  }
-  if (q) {
-    query = query.or(`nombre.ilike.%${q}%,cuit.ilike.%${q}%,localidad.ilike.%${q}%`);
-  }
+  if (tipoFiltro !== 'todos') query = query.eq('tipo', tipoFiltro);
+  if (!mostrarInactivos) query = query.eq('activo', true);
+  if (q) query = query.or(`nombre.ilike.%${q}%,cuit.ilike.%${q}%,localidad.ilike.%${q}%`);
 
   const { data: clientes } = await query.order('nombre');
 
-  // KPIs
   const { count: total } = await supabase
     .from('clientes')
     .select('id', { count: 'exact', head: true })
@@ -72,49 +69,39 @@ export default async function ClientesPage({
     .eq('productor_id', ctx.productor.id)
     .eq('activo', true);
 
-  const saldoTotal = (saldos ?? []).reduce(
-    (s, c) => s + (Number(c.saldo_cta_cte) || 0),
-    0
-  );
+  const saldoTotal = (saldos ?? []).reduce((s, c) => s + (Number(c.saldo_cta_cte) || 0), 0);
   const tePagan = (saldos ?? []).filter((c) => Number(c.saldo_cta_cte) > 0).length;
   const lesDebes = (saldos ?? []).filter((c) => Number(c.saldo_cta_cte) < 0).length;
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1
-            className="text-3xl tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)' }}
+      <PageHeader
+        title="Clientes"
+        icon="👥"
+        subtitle="Acopios, frigoríficos, proveedores y particulares"
+        actions={
+          <Link
+            href="/admin/clientes/nuevo"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
           >
-            Clientes
-          </h1>
-          <p className="text-[var(--fg-muted)] mt-1">
-            Acopios, frigoríficos, proveedores y particulares
-          </p>
-        </div>
-        <Link
-          href="/admin/clientes/nuevo"
-          className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
-        >
-          + Nuevo cliente
-        </Link>
-      </header>
+            <Plus className="w-4 h-4" strokeWidth={2.4} />
+            Nuevo cliente
+          </Link>
+        }
+      />
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card label="Total activos" value={String(total ?? 0)} icon="👥" />
-        <Card label="Te deben" value={String(tePagan)} icon="🟢" />
-        <Card label="Les debés" value={String(lesDebes)} icon="🔴" />
-        <Card
+        <KpiCard label="Total activos" value={String(total ?? 0)} icon={Users} color="primary" />
+        <KpiCard label="Te deben" value={String(tePagan)} icon={TrendingUp} color="red" />
+        <KpiCard label="Les debés" value={String(lesDebes)} icon={TrendingDown} color="amber" />
+        <KpiCard
           label="Saldo neto"
-          value={formatARS(saldoTotal)}
-          icon="💰"
-          color={saldoTotal >= 0 ? 'text-emerald-700' : 'text-red-700'}
+          value={`$${formatARS(Math.abs(saldoTotal))}`}
+          icon={Wallet}
+          color={saldoTotal >= 0 ? 'emerald' : 'red'}
         />
       </div>
 
-      {/* Filtros */}
       <form
         method="get"
         className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm flex flex-wrap gap-3 items-end"
@@ -177,41 +164,37 @@ export default async function ClientesPage({
         )}
       </form>
 
-      {/* Tabla */}
       {!clientes || clientes.length === 0 ? (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-          <div className="text-5xl mb-3">👥</div>
-          <h2 className="text-lg font-bold">
-            {q || tipoFiltro !== 'todos' ? 'Sin resultados' : 'No tenés clientes cargados'}
-          </h2>
-          {!q && tipoFiltro === 'todos' && (
-            <>
-              <p className="text-[var(--fg-muted)] text-sm mt-2 max-w-md mx-auto">
-                Cargá tu primer cliente para empezar a registrar operaciones.
-              </p>
-              <Link
-                href="/admin/clientes/nuevo"
-                className="inline-block mt-4 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition text-sm"
-              >
-                + Crear el primero
-              </Link>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={Users}
+          title={
+            q || tipoFiltro !== 'todos' ? 'Sin resultados' : 'No tenés clientes cargados'
+          }
+          description={
+            !q && tipoFiltro === 'todos'
+              ? 'Cargá tu primer cliente para empezar a registrar operaciones.'
+              : undefined
+          }
+          action={
+            !q && tipoFiltro === 'todos'
+              ? { label: '+ Crear el primero', href: '/admin/clientes/nuevo' }
+              : undefined
+          }
+        />
       ) : (
         <div className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-hover)] text-xs uppercase tracking-wider text-[var(--fg-muted)]">
+              <thead className="bg-[var(--bg-hover)]">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Cliente</th>
-                  <th className="px-5 py-3 text-left font-semibold">Tipo</th>
-                  <th className="px-5 py-3 text-left font-semibold">CUIT</th>
-                  <th className="px-5 py-3 text-left font-semibold">Condición IVA</th>
-                  <th className="px-5 py-3 text-left font-semibold">Localidad</th>
-                  <th className="px-5 py-3 text-right font-semibold">Saldo</th>
-                  <th className="px-5 py-3 text-center font-semibold">Contacto</th>
-                  <th className="px-5 py-3 text-right font-semibold">Acciones</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Cliente</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Tipo</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">CUIT</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Condición IVA</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Localidad</th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Saldo</th>
+                  <th className="px-5 py-3 text-center text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Contacto</th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -221,13 +204,10 @@ export default async function ClientesPage({
                   return (
                     <tr
                       key={c.id}
-                      className={`border-t border-[var(--border)] hover:bg-[var(--bg-hover)] ${!c.activo ? 'opacity-50' : ''}`}
+                      className={`border-t border-[var(--border)] hover:bg-[var(--bg-hover)] transition ${!c.activo ? 'opacity-50' : ''}`}
                     >
                       <td className="px-5 py-3">
-                        <Link
-                          href={`/admin/clientes/${c.id}`}
-                          className="font-medium hover:text-[var(--primary)]"
-                        >
+                        <Link href={`/admin/clientes/${c.id}`} className="font-medium hover:text-[var(--primary)]">
                           {c.nombre}
                         </Link>
                       </td>
@@ -243,38 +223,46 @@ export default async function ClientesPage({
                       <td className="px-5 py-3 text-[var(--fg-muted)]">
                         {c.localidad ?? '—'}
                       </td>
-                      <td className={`px-5 py-3 text-right font-medium ${saldo > 0 ? 'text-emerald-700' : saldo < 0 ? 'text-red-700' : 'text-[var(--fg-muted)]'}`}>
-                        {saldo === 0 ? '—' : formatARS(saldo)}
+                      <td
+                        className={`px-5 py-3 text-right font-bold mono ${
+                          saldo > 0
+                            ? 'text-red-700'
+                            : saldo < 0
+                            ? 'text-emerald-700'
+                            : 'text-[var(--fg-muted)]'
+                        }`}
+                      >
+                        {saldo === 0 ? '—' : `$${formatARS(Math.abs(saldo))}`}
                       </td>
                       <td className="px-5 py-3 text-center">
-                        <div className="flex gap-1 justify-center">
+                        <div className="flex gap-1.5 justify-center">
                           {c.whatsapp && (
                             <a
                               href={`https://wa.me/${c.whatsapp.replace(/\D/g, '')}`}
                               target="_blank"
                               rel="noopener"
-                              className="text-[var(--whatsapp)] hover:opacity-70"
+                              className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 grid place-items-center transition"
                               title={`WhatsApp: ${c.whatsapp}`}
                             >
-                              💬
+                              <MessageCircle className="w-3.5 h-3.5 text-emerald-700" strokeWidth={2} />
                             </a>
                           )}
                           {c.email && (
                             <a
                               href={`mailto:${c.email}`}
-                              className="text-blue-600 hover:opacity-70"
+                              className="w-7 h-7 rounded-lg bg-blue-50 hover:bg-blue-100 grid place-items-center transition"
                               title={`Email: ${c.email}`}
                             >
-                              ✉️
+                              <Mail className="w-3.5 h-3.5 text-blue-700" strokeWidth={2} />
                             </a>
                           )}
                           {c.telefono && (
                             <a
                               href={`tel:${c.telefono}`}
-                              className="text-[var(--fg)] hover:opacity-70"
+                              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 grid place-items-center transition"
                               title={`Tel: ${c.telefono}`}
                             >
-                              📞
+                              <Phone className="w-3.5 h-3.5 text-gray-700" strokeWidth={2} />
                             </a>
                           )}
                         </div>
@@ -290,34 +278,6 @@ export default async function ClientesPage({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Card({
-  label,
-  value,
-  icon,
-  color = '',
-}: {
-  label: string;
-  value: string;
-  icon: string;
-  color?: string;
-}) {
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wider font-semibold">
-            {label}
-          </div>
-          <div className={`text-lg font-extrabold mt-0.5 truncate ${color}`}>
-            {value}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

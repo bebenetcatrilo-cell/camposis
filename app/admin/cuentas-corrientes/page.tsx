@@ -2,16 +2,16 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Users, TrendingUp, TrendingDown, Wallet, BookOpen } from 'lucide-react';
 import { calcularSaldoCliente } from '@/lib/calcular-saldo';
 import { formatARS } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 type SP = Promise<{ q?: string; filtro?: string }>;
 
-export default async function CuentasCorrientesPage({
-  searchParams,
-}: {
-  searchParams: SP;
-}) {
+export default async function CuentasCorrientesPage({ searchParams }: { searchParams: SP }) {
   const params = await searchParams;
   const q = params.q?.trim() ?? '';
   const filtro = params.filtro ?? 'todos';
@@ -21,7 +21,6 @@ export default async function CuentasCorrientesPage({
 
   const supabase = await createClient();
 
-  // Traer clientes
   let queryClientes = supabase
     .from('clientes')
     .select('id, nombre, cuit, localidad, saldo_cta_cte, activo, tipo')
@@ -32,7 +31,6 @@ export default async function CuentasCorrientesPage({
 
   const { data: clientes } = await queryClientes.order('nombre');
 
-  // Traer TODAS las facturas y cheques del productor (luego agrupo por cliente)
   const { data: facturas } = await supabase
     .from('facturas')
     .select('id, cliente_id, total, estado, fecha')
@@ -45,7 +43,6 @@ export default async function CuentasCorrientesPage({
     .select('id, cliente_id, factura_id, importe, estado, fecha_emision')
     .eq('productor_id', ctx.productor.id);
 
-  // Calcular saldos por cliente
   const conSaldos = (clientes ?? []).map((c) => {
     const facsCliente = (facturas ?? []).filter((f) => f.cliente_id === c.id);
     const chqsCliente = (cheques ?? []).filter((ch) => ch.cliente_id === c.id);
@@ -57,17 +54,11 @@ export default async function CuentasCorrientesPage({
     return { cliente: c, saldo };
   });
 
-  // Aplicar filtro
   let filtrados = conSaldos;
-  if (filtro === 'con-deuda') {
-    filtrados = conSaldos.filter((x) => x.saldo.saldo_total > 0);
-  } else if (filtro === 'sin-deuda') {
-    filtrados = conSaldos.filter((x) => x.saldo.saldo_total === 0);
-  } else if (filtro === 'a-favor') {
-    filtrados = conSaldos.filter((x) => x.saldo.saldo_total < 0);
-  }
+  if (filtro === 'con-deuda') filtrados = conSaldos.filter((x) => x.saldo.saldo_total > 0);
+  else if (filtro === 'sin-deuda') filtrados = conSaldos.filter((x) => x.saldo.saldo_total === 0);
+  else if (filtro === 'a-favor') filtrados = conSaldos.filter((x) => x.saldo.saldo_total < 0);
 
-  // KPIs globales
   const totalDeudores = conSaldos.filter((x) => x.saldo.saldo_total > 0).length;
   const totalConSaldoFavor = conSaldos.filter((x) => x.saldo.saldo_total < 0).length;
   const sumaDeuda = conSaldos.reduce(
@@ -81,44 +72,36 @@ export default async function CuentasCorrientesPage({
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1
-          className="text-3xl tracking-tight"
-          style={{ fontFamily: 'var(--font-serif)' }}
-        >
-          💰 Cuentas Corrientes
-        </h1>
-        <p className="text-[var(--fg-muted)] mt-1">
-          Saldo calculado dinámicamente desde facturas y cheques.
-        </p>
-      </header>
+      <PageHeader
+        title="Cuentas Corrientes"
+        icon="💰"
+        subtitle="Saldo calculado dinámicamente desde facturas y cheques"
+      />
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card label="Clientes" value={String(conSaldos.length)} icon="👥" />
-        <Card
+        <KpiCard label="Clientes" value={String(conSaldos.length)} icon={Users} color="primary" />
+        <KpiCard
           label="Te deben"
           value={String(totalDeudores)}
           sub={`$${formatARS(sumaDeuda)}`}
-          icon="🔴"
-          color="text-red-700"
+          icon={TrendingUp}
+          color="red"
         />
-        <Card
+        <KpiCard
           label="Saldo a favor"
           value={String(totalConSaldoFavor)}
           sub={`$${formatARS(sumaFavor)}`}
-          icon="🟢"
-          color="text-emerald-700"
+          icon={TrendingDown}
+          color="emerald"
         />
-        <Card
+        <KpiCard
           label="Saldo neto"
-          value={`$${formatARS(sumaDeuda - sumaFavor)}`}
-          icon="💰"
-          color={sumaDeuda >= sumaFavor ? 'text-emerald-700' : 'text-red-700'}
+          value={`$${formatARS(Math.abs(sumaDeuda - sumaFavor))}`}
+          icon={Wallet}
+          color={sumaDeuda >= sumaFavor ? 'red' : 'emerald'}
         />
       </div>
 
-      {/* Filtros */}
       <form
         method="get"
         className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm flex flex-wrap gap-3 items-end"
@@ -158,25 +141,32 @@ export default async function CuentasCorrientesPage({
         </button>
       </form>
 
-      {/* Tabla */}
       {filtrados.length === 0 ? (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-          <div className="text-5xl mb-3">💰</div>
-          <p className="text-sm text-[var(--fg-muted)]">
-            {q || filtro !== 'todos' ? 'Sin resultados' : 'No hay clientes activos'}
-          </p>
-        </div>
+        <EmptyState
+          icon={BookOpen}
+          title={q || filtro !== 'todos' ? 'Sin resultados' : 'No hay clientes activos'}
+        />
       ) : (
         <div className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-hover)] text-xs uppercase tracking-wider text-[var(--fg-muted)]">
+              <thead className="bg-[var(--bg-hover)]">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Cliente</th>
-                  <th className="px-5 py-3 text-left font-semibold">CUIT</th>
-                  <th className="px-5 py-3 text-center font-semibold">Facturas pend.</th>
-                  <th className="px-5 py-3 text-right font-semibold">Saldo</th>
-                  <th className="px-5 py-3 text-right font-semibold">Acción</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                    Cliente
+                  </th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                    CUIT
+                  </th>
+                  <th className="px-5 py-3 text-center text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                    Pendientes
+                  </th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                    Saldo
+                  </th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">
+                    Acción
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -186,7 +176,7 @@ export default async function CuentasCorrientesPage({
                   return (
                     <tr
                       key={cliente.id}
-                      className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)]"
+                      className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)] transition"
                     >
                       <td className="px-5 py-3">
                         <Link
@@ -204,7 +194,7 @@ export default async function CuentasCorrientesPage({
                       </td>
                       <td className="px-5 py-3 text-center">
                         {saldo.facturas_pendientes_cantidad > 0 ? (
-                          <span className="inline-block px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-700">
+                          <span className="inline-block px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-700">
                             {saldo.facturas_pendientes_cantidad}
                           </span>
                         ) : (
@@ -213,7 +203,7 @@ export default async function CuentasCorrientesPage({
                       </td>
                       <td className="px-5 py-3 text-right">
                         <span
-                          className={`font-bold ${
+                          className={`font-bold mono ${
                             tieneDeuda
                               ? 'text-red-700'
                               : aFavor
@@ -245,35 +235,6 @@ export default async function CuentasCorrientesPage({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Card({
-  label,
-  value,
-  sub,
-  icon,
-  color = '',
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  icon: string;
-  color?: string;
-}) {
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wider font-semibold">
-            {label}
-          </div>
-          <div className={`text-lg font-extrabold mt-0.5 truncate ${color}`}>{value}</div>
-          {sub && <div className="text-xs text-[var(--fg-muted)]">{sub}</div>}
-        </div>
-      </div>
     </div>
   );
 }

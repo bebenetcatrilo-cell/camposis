@@ -2,17 +2,17 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { TogglerActivo } from './toggler';
+import { Package, Wheat, Beef, Plus } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { TogglerActivo as TogglerActivoProducto } from './toggler';
 
-type SearchParams = Promise<{ tipo?: string; q?: string; mostrar?: string }>;
+type SP = Promise<{ tipo?: string; q?: string; mostrar?: string }>;
 
-export default async function ProductosPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function ProductosPage({ searchParams }: { searchParams: SP }) {
   const params = await searchParams;
-  const tipo = (params.tipo === 'hacienda' ? 'hacienda' : 'cereal') as 'cereal' | 'hacienda';
+  const tipo = params.tipo ?? 'cereal';
   const q = params.q?.trim() ?? '';
   const mostrarInactivos = params.mostrar === 'todos';
 
@@ -27,65 +27,76 @@ export default async function ProductosPage({
     .eq('productor_id', ctx.productor.id)
     .eq('tipo', tipo);
 
-  if (!mostrarInactivos) {
-    query = query.eq('activo', true);
-  }
-
-  if (q) {
-    query = query.or(`nombre.ilike.%${q}%,especie.ilike.%${q}%,categoria.ilike.%${q}%,raza.ilike.%${q}%`);
-  }
+  if (!mostrarInactivos) query = query.eq('activo', true);
+  if (q) query = query.or(`nombre.ilike.%${q}%,especie.ilike.%${q}%,variedad.ilike.%${q}%,categoria.ilike.%${q}%,raza.ilike.%${q}%`);
 
   const { data: productos } = await query.order('nombre');
 
-  // Count totales
+  // KPIs por tipo
   const { count: totalCereal } = await supabase
     .from('productos')
     .select('id', { count: 'exact', head: true })
     .eq('productor_id', ctx.productor.id)
-    .eq('tipo', 'cereal');
+    .eq('tipo', 'cereal')
+    .eq('activo', true);
 
   const { count: totalHacienda } = await supabase
     .from('productos')
     .select('id', { count: 'exact', head: true })
     .eq('productor_id', ctx.productor.id)
-    .eq('tipo', 'hacienda');
+    .eq('tipo', 'hacienda')
+    .eq('activo', true);
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1
-            className="text-3xl tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)' }}
+      <PageHeader
+        title="Productos"
+        icon="📦"
+        subtitle="Catálogo de cereales y hacienda"
+        actions={
+          <Link
+            href={`/admin/productos/nuevo?tipo=${tipo}`}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
           >
-            Productos
-          </h1>
-          <p className="text-[var(--fg-muted)] mt-1">
-            Cereal y hacienda que comercializás
-          </p>
-        </div>
-        <Link
-          href={`/admin/productos/nuevo?tipo=${tipo}`}
-          className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
-        >
-          + Nuevo {tipo === 'cereal' ? 'cereal' : 'animal'}
-        </Link>
-      </header>
+            <Plus className="w-4 h-4" strokeWidth={2.4} />
+            Nuevo producto
+          </Link>
+        }
+      />
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <KpiCard label="Cereales" value={String(totalCereal ?? 0)} icon={Wheat} color="amber" />
+        <KpiCard label="Hacienda" value={String(totalHacienda ?? 0)} icon={Beef} color="red" />
+        <KpiCard
+          label="Total catálogo"
+          value={String((totalCereal ?? 0) + (totalHacienda ?? 0))}
+          icon={Package}
+          color="primary"
+        />
+      </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-[var(--border)]">
-        <TabLink
-          href={`/admin/productos?tipo=cereal${q ? `&q=${q}` : ''}${mostrarInactivos ? '&mostrar=todos' : ''}`}
-          active={tipo === 'cereal'}
+      <div className="flex gap-2 border-b border-[var(--border)]">
+        <Link
+          href="/admin/productos?tipo=cereal"
+          className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
+            tipo === 'cereal'
+              ? 'border-[var(--primary)] text-[var(--primary)]'
+              : 'border-transparent hover:text-[var(--primary)]'
+          }`}
         >
-          🌾 Cereal ({totalCereal ?? 0})
-        </TabLink>
-        <TabLink
-          href={`/admin/productos?tipo=hacienda${q ? `&q=${q}` : ''}${mostrarInactivos ? '&mostrar=todos' : ''}`}
-          active={tipo === 'hacienda'}
+          🌾 Cereales
+        </Link>
+        <Link
+          href="/admin/productos?tipo=hacienda"
+          className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${
+            tipo === 'hacienda'
+              ? 'border-[var(--primary)] text-[var(--primary)]'
+              : 'border-transparent hover:text-[var(--primary)]'
+          }`}
         >
-          🐄 Hacienda ({totalHacienda ?? 0})
-        </TabLink>
+          🐄 Hacienda
+        </Link>
       </div>
 
       {/* Filtros */}
@@ -102,7 +113,7 @@ export default async function ProductosPage({
             type="search"
             name="q"
             defaultValue={q}
-            placeholder={tipo === 'cereal' ? 'Soja, trigo, maíz...' : 'Ternero, novillo, vaca...'}
+            placeholder={tipo === 'cereal' ? 'Soja, trigo, variedad...' : 'Ternero, novillo, raza...'}
             className="w-full px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
           />
         </div>
@@ -116,7 +127,7 @@ export default async function ProductosPage({
             className="px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
           >
             <option value="activos">Solo activos</option>
-            <option value="todos">Todos (incluye inactivos)</option>
+            <option value="todos">Todos</option>
           </select>
         </div>
         <button
@@ -125,113 +136,70 @@ export default async function ProductosPage({
         >
           Filtrar
         </button>
-        {(q || mostrarInactivos) && (
-          <Link
-            href={`/admin/productos?tipo=${tipo}`}
-            className="px-4 py-2 border border-[var(--border)] rounded-lg font-medium hover:bg-[var(--bg-hover)] transition text-sm"
-          >
-            Limpiar
-          </Link>
-        )}
       </form>
 
-      {/* Tabla */}
       {!productos || productos.length === 0 ? (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-          <div className="text-5xl mb-3">{tipo === 'cereal' ? '🌾' : '🐄'}</div>
-          <h2 className="text-lg font-bold">
-            {q ? 'Sin resultados' : `No tenés productos de ${tipo}`}
-          </h2>
-          {!q && (
-            <>
-              <p className="text-[var(--fg-muted)] text-sm mt-2 max-w-md mx-auto">
-                El catálogo se carga automáticamente al crear el productor.
-                Si no ves nada acá, podés agregar manualmente.
-              </p>
-              <Link
-                href={`/admin/productos/nuevo?tipo=${tipo}`}
-                className="inline-block mt-4 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition text-sm"
-              >
-                + Crear el primero
-              </Link>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={tipo === 'cereal' ? Wheat : Beef}
+          title={
+            q ? 'Sin resultados' : `No tenés ${tipo === 'cereal' ? 'cereales' : 'hacienda'} cargada`
+          }
+          description={
+            !q ? `Agregá tu primer producto ${tipo === 'cereal' ? 'de cereal' : 'de hacienda'}.` : undefined
+          }
+          action={!q ? { label: '+ Crear primero', href: `/admin/productos/nuevo?tipo=${tipo}` } : undefined}
+        />
       ) : (
         <div className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-hover)] text-xs uppercase tracking-wider text-[var(--fg-muted)]">
+              <thead className="bg-[var(--bg-hover)]">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Nombre</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Nombre</th>
                   {tipo === 'cereal' ? (
                     <>
-                      <th className="px-5 py-3 text-left font-semibold">Especie</th>
-                      <th className="px-5 py-3 text-left font-semibold">Variedad</th>
-                      <th className="px-5 py-3 text-left font-semibold">Campaña</th>
-                      <th className="px-5 py-3 text-left font-semibold">Grado</th>
+                      <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Especie</th>
+                      <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Variedad</th>
+                      <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Campaña</th>
                     </>
                   ) : (
                     <>
-                      <th className="px-5 py-3 text-left font-semibold">Categoría</th>
-                      <th className="px-5 py-3 text-left font-semibold">Raza</th>
-                      <th className="px-5 py-3 text-left font-semibold">Sexo</th>
-                      <th className="px-5 py-3 text-left font-semibold">Edad/Peso</th>
+                      <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Categoría</th>
+                      <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Raza</th>
+                      <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Sexo</th>
                     </>
                   )}
-                  <th className="px-5 py-3 text-left font-semibold">Unidad</th>
-                  <th className="px-5 py-3 text-left font-semibold">Estado</th>
-                  <th className="px-5 py-3 text-right font-semibold">Acciones</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Unidad</th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {productos.map((p) => (
                   <tr
                     key={p.id}
-                    className={`border-t border-[var(--border)] hover:bg-[var(--bg-hover)] ${!p.activo ? 'opacity-50' : ''}`}
+                    className={`border-t border-[var(--border)] hover:bg-[var(--bg-hover)] transition ${!p.activo ? 'opacity-50' : ''}`}
                   >
                     <td className="px-5 py-3">
-                      <Link
-                        href={`/admin/productos/${p.id}`}
-                        className="font-medium hover:text-[var(--primary)]"
-                      >
+                      <Link href={`/admin/productos/${p.id}`} className="font-medium hover:text-[var(--primary)]">
                         {p.nombre}
                       </Link>
                     </td>
                     {tipo === 'cereal' ? (
                       <>
-                        <td className="px-5 py-3 text-[var(--fg-muted)]">{p.especie ?? '—'}</td>
-                        <td className="px-5 py-3 text-[var(--fg-muted)]">{p.variedad ?? '—'}</td>
-                        <td className="px-5 py-3 text-[var(--fg-muted)]">{p.campania ?? '—'}</td>
-                        <td className="px-5 py-3 text-[var(--fg-muted)]">{p.grado ?? '—'}</td>
+                        <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{p.especie ?? '—'}</td>
+                        <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{p.variedad ?? '—'}</td>
+                        <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{p.campania ?? '—'}</td>
                       </>
                     ) : (
                       <>
-                        <td className="px-5 py-3 text-[var(--fg-muted)]">{p.categoria ?? '—'}</td>
-                        <td className="px-5 py-3 text-[var(--fg-muted)]">{p.raza ?? '—'}</td>
-                        <td className="px-5 py-3 text-[var(--fg-muted)] capitalize">{p.sexo ?? '—'}</td>
-                        <td className="px-5 py-3 text-[var(--fg-muted)] text-xs">
-                          {p.edad_aprox_meses && `${p.edad_aprox_meses}m`}
-                          {p.edad_aprox_meses && p.peso_promedio_kg && ' · '}
-                          {p.peso_promedio_kg && `${p.peso_promedio_kg}kg`}
-                          {!p.edad_aprox_meses && !p.peso_promedio_kg && '—'}
-                        </td>
+                        <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{p.categoria ?? '—'}</td>
+                        <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{p.raza ?? '—'}</td>
+                        <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{p.sexo ?? '—'}</td>
                       </>
                     )}
-                    <td className="px-5 py-3">
-                      <span className="inline-block px-2 py-0.5 bg-[var(--bg-hover)] rounded text-xs font-mono">
-                        {p.unidad}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3">
-                      {p.activo ? (
-                        <span className="text-emerald-600 text-xs">✓ Activo</span>
-                      ) : (
-                        <span className="text-[var(--fg-muted)] text-xs">○ Inactivo</span>
-                      )}
-                    </td>
+                    <td className="px-5 py-3 text-xs font-mono">{p.unidad}</td>
                     <td className="px-5 py-3 text-right">
-                      <TogglerActivo id={p.id} activo={p.activo} />
+                      <TogglerActivoProducto id={p.id} activo={p.activo} />
                     </td>
                   </tr>
                 ))}
@@ -241,28 +209,5 @@ export default async function ProductosPage({
         </div>
       )}
     </div>
-  );
-}
-
-function TabLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition ${
-        active
-          ? 'border-[var(--primary)] text-[var(--primary)]'
-          : 'border-transparent text-[var(--fg-muted)] hover:text-[var(--fg)]'
-      }`}
-    >
-      {children}
-    </Link>
   );
 }

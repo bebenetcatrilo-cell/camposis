@@ -2,13 +2,18 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { FileText, CheckCircle, Clock, DollarSign, Plus, ClipboardList } from 'lucide-react';
 import { formatARS, formatFecha } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { EmptyState } from '@/components/ui/empty-state';
 
-const ESTADOS: Record<string, { label: string; icon: string; bg: string; text: string }> = {
-  pendiente: { label: 'Pendiente', icon: '⏳', bg: 'bg-amber-100', text: 'text-amber-700' },
-  aprobado: { label: 'Aprobado', icon: '✓', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  rechazado: { label: 'Rechazado', icon: '✗', bg: 'bg-red-100', text: 'text-red-700' },
-  facturado: { label: 'Facturado', icon: '🧾', bg: 'bg-blue-100', text: 'text-blue-700' },
+const ESTADOS: Record<string, { label: string; icon: string; color: 'amber' | 'emerald' | 'red' | 'blue' | 'gray' }> = {
+  pendiente: { label: 'Pendiente', icon: '⏳', color: 'amber' },
+  aprobado: { label: 'Aprobado', icon: '✓', color: 'emerald' },
+  rechazado: { label: 'Rechazado', icon: '✗', color: 'red' },
+  facturado: { label: 'Facturado', icon: '🧾', color: 'blue' },
 };
 
 type SP = Promise<{ q?: string; estado?: string }>;
@@ -33,7 +38,6 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
 
   const { data: presupuestos } = await query.order('numero', { ascending: false });
 
-  // KPIs
   const { data: kpiData } = await supabase
     .from('presupuestos')
     .select('estado, total')
@@ -53,35 +57,33 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
 
   return (
     <div className="space-y-6">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1
-            className="text-3xl tracking-tight"
-            style={{ fontFamily: 'var(--font-serif)' }}
+      <PageHeader
+        title="Presupuestos"
+        icon="📋"
+        subtitle="Cotizaciones de venta a tus clientes"
+        actions={
+          <Link
+            href="/admin/presupuestos/nuevo"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
           >
-            📋 Presupuestos
-          </h1>
-          <p className="text-[var(--fg-muted)] mt-1">
-            Cotizaciones de venta a tus clientes
-          </p>
-        </div>
-        <Link
-          href="/admin/presupuestos/nuevo"
-          className="px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
-        >
-          + Nuevo presupuesto
-        </Link>
-      </header>
+            <Plus className="w-4 h-4" strokeWidth={2.4} />
+            Nuevo presupuesto
+          </Link>
+        }
+      />
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card label="Total" value={String(kpis.total)} icon="📋" />
-        <Card label="Pendientes" value={String(kpis.pendientes)} icon="⏳" />
-        <Card label="Aprobados" value={String(kpis.aprobados)} icon="✓" />
-        <Card label="Monto pendiente" value={formatARS(kpis.monto_pendiente)} icon="💰" />
+        <KpiCard label="Total" value={String(kpis.total)} icon={FileText} color="primary" />
+        <KpiCard label="Pendientes" value={String(kpis.pendientes)} icon={Clock} color="amber" />
+        <KpiCard label="Aprobados" value={String(kpis.aprobados)} icon={CheckCircle} color="emerald" />
+        <KpiCard
+          label="Monto pendiente"
+          value={`$${formatARS(kpis.monto_pendiente)}`}
+          icon={DollarSign}
+          color="amber"
+        />
       </div>
 
-      {/* Filtros */}
       <form
         method="get"
         className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm flex flex-wrap gap-3 items-end"
@@ -129,46 +131,40 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
         )}
       </form>
 
-      {/* Tabla */}
       {!presupuestos || presupuestos.length === 0 ? (
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-          <div className="text-5xl mb-3">📋</div>
-          <h2 className="text-lg font-bold">
-            {q || estado !== 'todos' ? 'Sin resultados' : 'No tenés presupuestos'}
-          </h2>
-          {!q && estado === 'todos' && (
-            <>
-              <p className="text-[var(--fg-muted)] text-sm mt-2">
-                Creá tu primer presupuesto para empezar.
-              </p>
-              <Link
-                href="/admin/presupuestos/nuevo"
-                className="inline-block mt-4 px-4 py-2 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-h)] transition text-sm"
-              >
-                + Crear el primero
-              </Link>
-            </>
-          )}
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          title={q || estado !== 'todos' ? 'Sin resultados' : 'No tenés presupuestos todavía'}
+          description={
+            !q && estado === 'todos'
+              ? 'Creá tu primer presupuesto para empezar a cotizar a tus clientes.'
+              : undefined
+          }
+          action={
+            !q && estado === 'todos'
+              ? { label: '+ Crear primer presupuesto', href: '/admin/presupuestos/nuevo' }
+              : undefined
+          }
+        />
       ) : (
         <div className="bg-white border border-[var(--border)] rounded-2xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-[var(--bg-hover)] text-xs uppercase tracking-wider text-[var(--fg-muted)]">
+              <thead className="bg-[var(--bg-hover)]">
                 <tr>
-                  <th className="px-5 py-3 text-left font-semibold">Nº</th>
-                  <th className="px-5 py-3 text-left font-semibold">Fecha</th>
-                  <th className="px-5 py-3 text-left font-semibold">Cliente</th>
-                  <th className="px-5 py-3 text-left font-semibold">Concepto</th>
-                  <th className="px-5 py-3 text-right font-semibold">Total</th>
-                  <th className="px-5 py-3 text-left font-semibold">Estado</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Nº</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Fecha</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Cliente</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Concepto</th>
+                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Total</th>
+                  <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Estado</th>
                 </tr>
               </thead>
               <tbody>
                 {presupuestos.map((p) => {
                   const est = ESTADOS[p.estado] ?? ESTADOS.pendiente;
                   return (
-                    <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)]">
+                    <tr key={p.id} className="border-t border-[var(--border)] hover:bg-[var(--bg-hover)] transition">
                       <td className="px-5 py-3">
                         <Link
                           href={`/admin/presupuestos/${p.id}`}
@@ -177,7 +173,7 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
                           {String(p.numero).padStart(4, '0')}
                         </Link>
                       </td>
-                      <td className="px-5 py-3 text-xs">{formatFecha(p.fecha)}</td>
+                      <td className="px-5 py-3 text-xs text-[var(--fg-muted)]">{formatFecha(p.fecha)}</td>
                       <td className="px-5 py-3">
                         <Link
                           href={`/admin/presupuestos/${p.id}`}
@@ -189,13 +185,11 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
                       <td className="px-5 py-3 text-[var(--fg-muted)] max-w-[250px] truncate">
                         {p.concepto ?? '—'}
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold">
-                        {formatARS(Number(p.total))}
+                      <td className="px-5 py-3 text-right font-bold mono">
+                        ${formatARS(Number(p.total))}
                       </td>
                       <td className="px-5 py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${est.bg} ${est.text}`}>
-                          {est.icon} {est.label}
-                        </span>
+                        <StatusBadge label={est.label} icon={est.icon} color={est.color} />
                       </td>
                     </tr>
                   );
@@ -205,22 +199,6 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Card({ label, value, icon }: { label: string; value: string; icon: string }) {
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-2xl">{icon}</span>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs text-[var(--fg-muted)] uppercase tracking-wider font-semibold">
-            {label}
-          </div>
-          <div className="text-lg font-extrabold mt-0.5 truncate">{value}</div>
-        </div>
-      </div>
     </div>
   );
 }
