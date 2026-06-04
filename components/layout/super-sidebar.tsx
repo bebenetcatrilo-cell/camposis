@@ -9,6 +9,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Shield,
+  HelpCircle,
 } from 'lucide-react';
 import { logoutAction } from '@/lib/actions/auth';
 import { cn } from '@/lib/utils';
@@ -25,20 +27,29 @@ export function SuperSidebar({ nombreUsuario }: { nombreUsuario: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col shrink-0 bg-[var(--carbon)] text-white">
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/10 text-center">
-        <div className="text-4xl mb-2">🛡️</div>
-        <p className="text-[12px] font-extrabold tracking-[.25em] leading-none">
-          CAMPOS
-        </p>
-        <p className="text-[9px] tracking-[.35em] text-white/60 mt-1 leading-none">
-          SUPER-ADMIN
-        </p>
+    <aside className="hidden lg:flex w-[260px] flex-col shrink-0 bg-white border-r border-[var(--border)]">
+      {/* LOGO */}
+      <div className="px-5 pt-6 pb-5 border-b border-[var(--border)]">
+        <Link href="/super-admin" className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--primary)] grid place-items-center shrink-0">
+            <Shield className="w-6 h-6 text-white" strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p
+              className="text-[19px] leading-none font-extrabold tracking-tight"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              Campos <span className="text-[var(--primary)]">SIS</span>
+            </p>
+            <p className="text-[10px] text-[var(--fg-muted)] mt-1 leading-none tracking-[.18em] uppercase">
+              Super-Admin
+            </p>
+          </div>
+        </Link>
       </div>
 
-      {/* Menu */}
-      <nav className="p-3 flex flex-col gap-1 flex-1 overflow-y-auto">
+      {/* MENU */}
+      <nav className="px-3 py-3 flex flex-col gap-0.5 flex-1 overflow-y-auto">
         {menu.map((item) => {
           const active =
             item.href === '/super-admin'
@@ -50,31 +61,47 @@ export function SuperSidebar({ nombreUsuario }: { nombreUsuario: string }) {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium transition',
                 active
-                  ? 'bg-white/15 text-white'
-                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  ? 'bg-[var(--primary-bg)] text-[var(--primary)] font-semibold'
+                  : 'text-[var(--fg-muted)] hover:bg-[var(--bg-hover)] hover:text-[var(--fg)]'
               )}
             >
-              <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.8} />
+              <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={active ? 2.2 : 1.7} />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-white/10">
-        <div className="px-3 py-2 mb-2">
-          <p className="text-sm font-semibold truncate">{nombreUsuario}</p>
-          <p className="text-xs text-white/60">Super-admin</p>
+      {/* AYUDA */}
+      <div className="px-3 py-2">
+        <Link
+          href="#"
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-[var(--fg-muted)] hover:bg-[var(--bg-hover)] transition"
+        >
+          <HelpCircle className="w-[16px] h-[16px]" strokeWidth={1.7} />
+          Centro de ayuda
+        </Link>
+      </div>
+
+      {/* USUARIO */}
+      <div className="px-3 py-3 border-t border-[var(--border)]">
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-lg">
+          <div className="w-9 h-9 rounded-full bg-[var(--primary)] text-white grid place-items-center text-[13px] font-bold shrink-0">
+            {nombreUsuario.charAt(0).toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold truncate leading-tight">{nombreUsuario}</p>
+            <p className="text-[11px] text-[var(--fg-muted)] truncate leading-tight">Super-admin</p>
+          </div>
         </div>
-        <form action={logoutAction}>
+        <form action={logoutAction} className="mt-1">
           <button
             type="submit"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-[var(--fg-muted)] hover:bg-red-50 hover:text-[var(--red)] transition"
           >
-            <LogOut className="w-[18px] h-[18px]" strokeWidth={1.8} />
+            <LogOut className="w-[15px] h-[15px]" strokeWidth={1.7} />
             Cerrar sesión
           </button>
         </form>
