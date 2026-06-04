@@ -54,6 +54,10 @@ export interface Productor {
   activa: boolean;
   notas_internas: string | null;
 
+  // ── Facturación (Bloque 9) ──
+  punto_venta: string;                    // ej: '0001'
+  condicion_iva_propia: string | null;    // 'ri' / 'monotributo' / 'exento'
+
   created_at: string;
   updated_at: string;
 }
