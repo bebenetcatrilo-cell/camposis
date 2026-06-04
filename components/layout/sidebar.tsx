@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Truck,
+  ShoppingCart,
   Package,
   Wheat,
   FileText,
@@ -34,6 +35,7 @@ const menuPrincipal = [
   { href: '/admin/silos', label: 'Silos', icon: Wheat },
   { href: '/admin/presupuestos', label: 'Presupuestos', icon: FileText },
   { href: '/admin/facturas', label: 'Facturas', icon: Receipt },
+  { href: '/admin/compras', label: 'Compras', icon: ShoppingCart },
   { href: '/admin/cheques', label: 'Cheques', icon: CreditCard },
   { href: '/admin/cuentas-corrientes', label: 'Cta. Corriente', icon: Wallet },
 ];
