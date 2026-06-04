@@ -29,7 +29,7 @@ export default async function SuperAdminLayout({
     <div className="flex min-h-screen">
       <SuperSidebar nombreUsuario={perfil.nombre} />
       <main className="flex-1 min-w-0">
-        <Topbar />
+        <Topbar nombreUsuario={perfil.nombre} rolLabel="Super Admin" />
         <div className="p-4 md:p-7">{children}</div>
       </main>
     </div>
