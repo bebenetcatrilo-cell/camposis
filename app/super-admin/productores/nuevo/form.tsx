@@ -18,9 +18,9 @@ export function NuevoProductorForm() {
   const [nombre, setNombre] = useState('');
   const [slug, setSlug] = useState('');
   const [crearUsuario, setCrearUsuario] = useState(true);
+  const [usarExistente, setUsarExistente] = useState(false);
   const [plan, setPlan] = useState('trial');
 
-  // Auto-derivar slug del nombre
   function handleNombreChange(v: string) {
     setNombre(v);
     if (!slug || slug === slugify(nombre)) {
@@ -34,17 +34,17 @@ export function NuevoProductorForm() {
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     formData.set('crear_usuario_admin', crearUsuario ? 'true' : 'false');
+    formData.set('usar_existente', usarExistente ? 'true' : 'false');
     const result = await crearProductorAction(formData);
     if (result?.error) {
       setError(result.error);
       setLoading(false);
     }
-    // si OK, crearProductorAction hace redirect()
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ───── DATOS DEL PRODUCTOR ───── */}
+      {/* DATOS PRODUCTOR */}
       <section className="space-y-4">
         <h3 className="font-bold text-sm text-[var(--fg-muted)] uppercase tracking-wider">
           🌾 Datos del productor
@@ -52,11 +52,8 @@ export function NuevoProductorForm() {
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="nombre" className="block text-sm font-medium mb-1.5">
-              Nombre del cliente *
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Nombre del cliente *</label>
             <input
-              id="nombre"
               name="nombre"
               type="text"
               required
@@ -66,35 +63,23 @@ export function NuevoProductorForm() {
               placeholder="Juan Pérez SA"
             />
           </div>
-
           <div>
-            <label htmlFor="slug" className="block text-sm font-medium mb-1.5">
-              Slug (subdominio) *
-            </label>
-            <div className="flex items-center gap-1">
-              <input
-                id="slug"
-                name="slug"
-                type="text"
-                required
-                value={slug}
-                onChange={(e) => setSlug(slugify(e.target.value))}
-                className="flex-1 px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                placeholder="juanperez"
-              />
-            </div>
-            <p className="text-xs text-[var(--fg-muted)] mt-1">
-              URL: <span className="font-mono">{slug || 'slug'}.camposis.bbnetsystem.com</span>
-            </p>
+            <label className="block text-sm font-medium mb-1.5">Slug (interno) *</label>
+            <input
+              name="slug"
+              type="text"
+              required
+              value={slug}
+              onChange={(e) => setSlug(slugify(e.target.value))}
+              className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+              placeholder="juanperez"
+            />
           </div>
         </div>
 
         <div>
-          <label htmlFor="nombre_campo" className="block text-sm font-medium mb-1.5">
-            Nombre del campo / establecimiento
-          </label>
+          <label className="block text-sm font-medium mb-1.5">Nombre del campo</label>
           <input
-            id="nombre_campo"
             name="nombre_campo"
             type="text"
             className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
@@ -104,11 +89,8 @@ export function NuevoProductorForm() {
 
         <div className="grid md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="email_contacto" className="block text-sm font-medium mb-1.5">
-              Email contacto *
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Email contacto *</label>
             <input
-              id="email_contacto"
               name="email_contacto"
               type="email"
               required
@@ -117,50 +99,35 @@ export function NuevoProductorForm() {
             />
           </div>
           <div>
-            <label htmlFor="telefono" className="block text-sm font-medium mb-1.5">
-              Teléfono
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Teléfono</label>
             <input
-              id="telefono"
               name="telefono"
               type="tel"
               className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-              placeholder="3512345678"
             />
           </div>
           <div>
-            <label htmlFor="whatsapp" className="block text-sm font-medium mb-1.5">
-              WhatsApp
-            </label>
+            <label className="block text-sm font-medium mb-1.5">WhatsApp</label>
             <input
-              id="whatsapp"
               name="whatsapp"
               type="tel"
               className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-              placeholder="3512345678"
             />
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="direccion" className="block text-sm font-medium mb-1.5">
-              Dirección
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Dirección</label>
             <input
-              id="direccion"
               name="direccion"
               type="text"
               className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-              placeholder="Ruta 8 km 240"
             />
           </div>
           <div>
-            <label htmlFor="cuit" className="block text-sm font-medium mb-1.5">
-              CUIT
-            </label>
+            <label className="block text-sm font-medium mb-1.5">CUIT</label>
             <input
-              id="cuit"
               name="cuit"
               type="text"
               className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
@@ -171,26 +138,19 @@ export function NuevoProductorForm() {
 
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="localidad" className="block text-sm font-medium mb-1.5">
-              Localidad
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Localidad</label>
             <input
-              id="localidad"
               name="localidad"
               type="text"
               className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-              placeholder="Río Cuarto"
             />
           </div>
           <div>
-            <label htmlFor="provincia" className="block text-sm font-medium mb-1.5">
-              Provincia
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Provincia</label>
             <select
-              id="provincia"
               name="provincia"
-              className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
               defaultValue=""
+              className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
             >
               <option value="">— Seleccionar —</option>
               {PROVINCIAS.map((p) => (
@@ -201,7 +161,7 @@ export function NuevoProductorForm() {
         </div>
       </section>
 
-      {/* ───── PLAN Y SUSCRIPCIÓN ───── */}
+      {/* PLAN */}
       <section className="space-y-4 pt-4 border-t border-[var(--border)]">
         <h3 className="font-bold text-sm text-[var(--fg-muted)] uppercase tracking-wider">
           💎 Plan y suscripción
@@ -209,17 +169,14 @@ export function NuevoProductorForm() {
 
         <div className="grid md:grid-cols-3 gap-4">
           <div>
-            <label htmlFor="plan" className="block text-sm font-medium mb-1.5">
-              Plan inicial
-            </label>
+            <label className="block text-sm font-medium mb-1.5">Plan inicial</label>
             <select
-              id="plan"
               name="plan"
               value={plan}
               onChange={(e) => setPlan(e.target.value)}
               className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
             >
-              <option value="trial">🎁 Trial (prueba)</option>
+              <option value="trial">🎁 Trial</option>
               <option value="basico">📦 Básico</option>
               <option value="pro">💎 Pro</option>
               <option value="enterprise">🏢 Enterprise</option>
@@ -228,25 +185,18 @@ export function NuevoProductorForm() {
 
           {plan === 'trial' && (
             <div>
-              <label htmlFor="trial_termina" className="block text-sm font-medium mb-1.5">
-                Trial termina
-              </label>
+              <label className="block text-sm font-medium mb-1.5">Trial termina</label>
               <input
-                id="trial_termina"
                 name="trial_termina"
                 type="date"
                 className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
               />
             </div>
           )}
-
           {plan !== 'trial' && (
             <div>
-              <label htmlFor="proximo_pago" className="block text-sm font-medium mb-1.5">
-                Próximo pago
-              </label>
+              <label className="block text-sm font-medium mb-1.5">Próximo pago</label>
               <input
-                id="proximo_pago"
                 name="proximo_pago"
                 type="date"
                 className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
@@ -256,22 +206,18 @@ export function NuevoProductorForm() {
         </div>
 
         <div>
-          <label htmlFor="notas_internas" className="block text-sm font-medium mb-1.5">
-            Notas internas (solo super-admin)
-          </label>
+          <label className="block text-sm font-medium mb-1.5">Notas internas</label>
           <textarea
-            id="notas_internas"
             name="notas_internas"
             rows={2}
             className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent resize-y"
-            placeholder="Cómo nos conoció, condiciones especiales, etc."
           />
         </div>
       </section>
 
-      {/* ───── USUARIO ADMIN INICIAL ───── */}
+      {/* USUARIO ADMIN */}
       <section className="space-y-4 pt-4 border-t border-[var(--border)]">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h3 className="font-bold text-sm text-[var(--fg-muted)] uppercase tracking-wider">
             👤 Usuario admin del productor
           </h3>
@@ -282,48 +228,67 @@ export function NuevoProductorForm() {
               onChange={(e) => setCrearUsuario(e.target.checked)}
               className="w-4 h-4 accent-[var(--primary)]"
             />
-            <span>Crear ahora</span>
+            <span>Asociar admin ahora</span>
           </label>
         </div>
 
-        {crearUsuario ? (
+        {crearUsuario && (
           <>
-            <p className="text-xs text-[var(--fg-muted)] bg-[var(--bg-hover)] p-3 rounded-lg">
-              ℹ️ Se creará una cuenta para el cliente. El usuario va a recibir un email para
-              setear su contraseña.
-            </p>
+            <div className="bg-[var(--bg-hover)] border border-[var(--border)] rounded-lg p-3">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={usarExistente}
+                  onChange={(e) => setUsarExistente(e.target.checked)}
+                  className="mt-1 w-4 h-4 accent-[var(--primary)]"
+                />
+                <div className="flex-1">
+                  <div className="text-sm font-medium">
+                    Usar usuario existente
+                  </div>
+                  <div className="text-xs text-[var(--fg-muted)]">
+                    Si este admin ya es usuario de otro productor (multi-membership),
+                    tildá esto. Solo necesitás su email.
+                  </div>
+                </div>
+              </label>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="admin_nombre" className="block text-sm font-medium mb-1.5">
-                  Nombre del admin
+                <label className="block text-sm font-medium mb-1.5">
+                  Email del admin {usarExistente ? '(existente)' : ''}
                 </label>
                 <input
-                  id="admin_nombre"
-                  name="admin_nombre"
-                  type="text"
-                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
-                  placeholder="Juan Pérez"
-                />
-              </div>
-              <div>
-                <label htmlFor="admin_email" className="block text-sm font-medium mb-1.5">
-                  Email del admin (login)
-                </label>
-                <input
-                  id="admin_email"
                   name="admin_email"
                   type="email"
                   className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   placeholder="juan@cliente.com"
                 />
               </div>
+              {!usarExistente && (
+                <div>
+                  <label className="block text-sm font-medium mb-1.5">
+                    Nombre del admin (nuevo)
+                  </label>
+                  <input
+                    name="admin_nombre"
+                    type="text"
+                    className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                    placeholder="Juan Pérez"
+                  />
+                </div>
+              )}
             </div>
+
+            {!usarExistente && (
+              <p className="text-xs text-[var(--fg-muted)] bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                ℹ️ El usuario se crea con contraseña autogenerada. Después de crearlo
+                tenés que ir a Supabase → Authentication → Users → seleccionar el
+                usuario → "Reset password" → setear una contraseña.
+              </p>
+            )}
           </>
-        ) : (
-          <p className="text-xs text-[var(--fg-muted)] bg-[var(--bg-hover)] p-3 rounded-lg">
-            ℹ️ El productor se crea sin usuario admin. Podés agregar usuarios después
-            desde la página del productor.
-          </p>
         )}
       </section>
 

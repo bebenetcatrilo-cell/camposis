@@ -17,18 +17,18 @@ async function asegurarSuperAdmin() {
 
   const { data: perfil } = await supabase
     .from('perfiles')
-    .select('rol, activo')
+    .select('rol_perfil, activo')
     .eq('id', user.id)
     .single();
 
-  if (!perfil || perfil.rol !== 'super_admin' || !perfil.activo) {
+  if (!perfil || perfil.rol_perfil !== 'super_admin' || !perfil.activo) {
     throw new Error('Solo super-admin puede realizar esta acción');
   }
   return user;
 }
 
 // ──────────────────────────────────────────────────────────────
-// CREAR PRODUCTOR (con o sin usuario admin inicial)
+// CREAR PRODUCTOR
 // ──────────────────────────────────────────────────────────────
 
 export async function crearProductorAction(formData: FormData) {
@@ -56,12 +56,12 @@ export async function crearProductorAction(formData: FormData) {
   const crear_usuario_admin = formData.get('crear_usuario_admin') === 'true';
   const admin_email = String(formData.get('admin_email') || '').trim();
   const admin_nombre = String(formData.get('admin_nombre') || '').trim();
+  const usar_existente = formData.get('usar_existente') === 'true';
 
   // Validaciones
   if (!nombre) return { error: 'El nombre es obligatorio' };
   if (!email_contacto) return { error: 'El email de contacto es obligatorio' };
 
-  // Slug: si no vino, lo derivamos del nombre
   if (!slug) slug = slugify(nombre);
   if (!/^[a-z0-9-]+$/.test(slug)) {
     return { error: 'El slug solo puede tener letras, números y guiones' };
@@ -75,12 +75,14 @@ export async function crearProductorAction(formData: FormData) {
 
   if (crear_usuario_admin) {
     if (!admin_email) return { error: 'Falta el email del admin del productor' };
-    if (!admin_nombre) return { error: 'Falta el nombre del admin del productor' };
+    if (!usar_existente && !admin_nombre) {
+      return { error: 'Falta el nombre del admin del productor' };
+    }
   }
 
   const admin = createAdminClient();
 
-  // Verificar que el slug no exista
+  // Verificar slug
   const { data: existente } = await admin
     .from('productores')
     .select('id')
@@ -118,53 +120,67 @@ export async function crearProductorAction(formData: FormData) {
     return { error: 'Error al crear: ' + errInsert.message };
   }
 
-  // Si se pidió, crear el usuario admin inicial
+  // Si se pidió, crear o asociar usuario admin
   if (crear_usuario_admin && nuevo) {
-    // Usar admin client para crear el user en Auth
-    const { data: userData, error: errUser } = await admin.auth.admin.createUser({
-      email: admin_email,
-      email_confirm: true, // auto-confirmar para que no le llegue email de confirmación
-      user_metadata: {
-        nombre: admin_nombre,
-        rol: 'admin_productor',
-      },
-    });
+    let perfilId: string | null = null;
 
-    if (errUser) {
-      return {
-        error: `Productor creado pero falló crear el usuario admin: ${errUser.message}`,
-        productorId: nuevo.id,
-      };
-    }
-
-    // El trigger handle_new_user creó el perfil automáticamente.
-    // Actualizamos el perfil para asociarlo al productor y darle rol admin_productor.
-    if (userData?.user) {
-      const { error: errPerfil } = await admin
+    if (usar_existente) {
+      // Buscar perfil existente por email
+      const { data: perfilExistente } = await admin
         .from('perfiles')
-        .update({
-          productor_id: nuevo.id,
-          rol: 'admin_productor',
-          nombre: admin_nombre,
-        })
-        .eq('id', userData.user.id);
+        .select('id, nombre')
+        .eq('email', admin_email)
+        .single();
 
-      if (errPerfil) {
+      if (!perfilExistente) {
         return {
-          error: `Productor y usuario creados pero falló asociar perfil: ${errPerfil.message}`,
+          error: `No existe un usuario con email "${admin_email}". Crealo primero o usá la opción de "Crear nuevo usuario".`,
           productorId: nuevo.id,
         };
       }
-
-      // Enviar email de recuperación de contraseña para que el cliente la setee
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || '';
-      await admin.auth.admin.generateLink({
-        type: 'recovery',
+      perfilId = perfilExistente.id;
+    } else {
+      // Crear usuario nuevo
+      const { data: userData, error: errUser } = await admin.auth.admin.createUser({
         email: admin_email,
-        options: {
-          redirectTo: `${siteUrl}/auth/login`,
+        email_confirm: true,
+        user_metadata: {
+          nombre: admin_nombre,
         },
-      }).catch(() => {});
+      });
+
+      if (errUser) {
+        // Si el error es porque el email ya existe, sugerir usar_existente
+        if (errUser.message.toLowerCase().includes('already registered')
+          || errUser.message.toLowerCase().includes('already exists')) {
+          return {
+            error: `Ya existe un usuario con email "${admin_email}". Marcá "usar usuario existente" para asociarlo a este productor.`,
+            productorId: nuevo.id,
+          };
+        }
+        return {
+          error: `Productor creado pero falló crear el usuario admin: ${errUser.message}`,
+          productorId: nuevo.id,
+        };
+      }
+      perfilId = userData.user!.id;
+    }
+
+    // Crear membresía
+    const { error: errMembresia } = await admin
+      .from('miembros')
+      .insert({
+        perfil_id: perfilId,
+        productor_id: nuevo.id,
+        rol: 'admin_productor',
+        activo: true,
+      });
+
+    if (errMembresia) {
+      return {
+        error: `Productor y usuario creados pero falló asociar membresía: ${errMembresia.message}`,
+        productorId: nuevo.id,
+      };
     }
   }
 
@@ -284,7 +300,7 @@ export async function eliminarProductorAction(productorId: string) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// REGISTRAR PAGO (suscripción)
+// REGISTRAR PAGO
 // ──────────────────────────────────────────────────────────────
 
 export async function registrarPagoAction(formData: FormData) {
@@ -308,11 +324,6 @@ export async function registrarPagoAction(formData: FormData) {
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: perfil } = await supabase
-    .from('perfiles')
-    .select('id')
-    .eq('id', user!.id)
-    .single();
 
   const admin = createAdminClient();
   const { error } = await admin
@@ -325,12 +336,11 @@ export async function registrarPagoAction(formData: FormData) {
       periodo_hasta,
       metodo_pago,
       notas,
-      registrado_por: perfil?.id ?? null,
+      registrado_por: user?.id ?? null,
     });
 
   if (error) return { error: 'Error al registrar pago: ' + error.message };
 
-  // Si el productor estaba vencido o suspendido, reactivarlo
   await admin
     .from('productores')
     .update({

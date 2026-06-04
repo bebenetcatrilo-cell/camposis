@@ -17,12 +17,12 @@ export default async function SuperAdminLayout({
 
   const { data: perfil } = await supabase
     .from('perfiles')
-    .select('nombre, rol, activo')
+    .select('nombre, rol_perfil, activo')
     .eq('id', user.id)
     .single();
 
-  if (!perfil || !perfil.activo || perfil.rol !== 'super_admin') {
-    redirect('/admin');
+  if (!perfil || !perfil.activo || perfil.rol_perfil !== 'super_admin') {
+    redirect('/auth/login');
   }
 
   return (

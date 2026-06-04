@@ -6,7 +6,6 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Logo */}
         <div className="text-center space-y-2">
           <div className="text-5xl mb-3">🌾</div>
           <h1
@@ -20,14 +19,12 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Formulario */}
         <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
           <Suspense fallback={<div className="text-sm text-[var(--fg-muted)]">Cargando...</div>}>
             <LoginForm />
           </Suspense>
         </div>
 
-        {/* Link a registro */}
         <p className="text-center text-sm text-[var(--fg-muted)]">
           ¿Sos nuevo cliente?{' '}
           <Link

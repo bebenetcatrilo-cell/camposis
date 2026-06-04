@@ -1,22 +1,14 @@
-import { createClient } from '@/lib/supabase/server';
+import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ConfiguracionForm } from './form';
 
 export default async function ConfiguracionPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const ctx = await getProductorActivo();
+  if (!ctx) redirect('/auth/seleccionar-productor');
 
-  const { data: perfil } = await supabase
-    .from('perfiles')
-    .select('rol, productores(*)')
-    .eq('id', user!.id)
-    .single();
-
-  if (!perfil) redirect('/auth/login');
-
-  // Solo admin_productor (o super-admin que esté navegando) puede editar
-  if (perfil.rol !== 'admin_productor' && perfil.rol !== 'super_admin') {
+  // Solo admin del productor puede editar
+  if (ctx.rol !== 'admin_productor') {
     return (
       <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
         <div className="text-5xl mb-3">🔒</div>
@@ -35,18 +27,6 @@ export default async function ConfiguracionPage() {
     );
   }
 
-  const productor = Array.isArray(perfil?.productores)
-    ? perfil!.productores[0]
-    : perfil?.productores;
-
-  if (!productor) {
-    return (
-      <div className="bg-white border border-[var(--border)] rounded-2xl p-12 shadow-sm text-center">
-        <p>No hay productor asociado a tu cuenta.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 max-w-3xl">
       <header>
@@ -61,7 +41,7 @@ export default async function ConfiguracionPage() {
         </p>
       </header>
 
-      <ConfiguracionForm productor={productor} />
+      <ConfiguracionForm productor={ctx.productor} />
     </div>
   );
 }

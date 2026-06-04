@@ -3,10 +3,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+import { clearProductorActivo } from '@/lib/productor-actual';
 
 /**
  * Iniciar sesión con email + password.
- * Devuelve { error } o redirige al panel.
  */
 export async function loginAction(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
@@ -36,7 +36,7 @@ export async function loginAction(formData: FormData) {
 
   const { data: perfil } = await supabase
     .from('perfiles')
-    .select('rol, activo')
+    .select('rol_perfil, activo')
     .eq('id', user.id)
     .single();
 
@@ -55,8 +55,13 @@ export async function loginAction(formData: FormData) {
   if (redirectTo && redirectTo.startsWith('/')) {
     redirect(redirectTo);
   }
-  if (perfil.rol === 'super_admin') redirect('/super-admin');
-  redirect('/admin');
+  if (perfil.rol_perfil === 'super_admin') {
+    redirect('/super-admin');
+  }
+
+  // Usuario normal: limpiar cookie de productor previo y mandar al selector
+  await clearProductorActivo();
+  redirect('/auth/seleccionar-productor');
 }
 
 /**
@@ -65,14 +70,13 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await clearProductorActivo();
   revalidatePath('/', 'layout');
   redirect('/auth/login');
 }
 
 /**
- * Registro inicial (autoregistro de productor + admin del productor).
- * Esto es lo que hace el cliente nuevo al darse de alta solo.
- * (Por ahora simple. Más adelante agregamos confirmación de email.)
+ * Registro inicial.
  */
 export async function registroAction(formData: FormData) {
   const email = String(formData.get('email') || '').trim();
@@ -93,7 +97,6 @@ export async function registroAction(formData: FormData) {
     options: {
       data: {
         nombre,
-        rol: 'empleado', // Por defecto. Bebe convierte a admin_productor manualmente.
       },
     },
   });

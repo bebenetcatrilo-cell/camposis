@@ -5,9 +5,14 @@
 
 // ── Enums ──
 export type RolUsuarioTipo =
-  | 'super_admin'      // Bebe: ve todos los productores
-  | 'admin_productor'  // Dueño del campo
-  | 'empleado';        // Operario, contador, etc.
+  | 'super_admin'      // (legacy) compat
+  | 'admin_productor'  // Dueño del campo (rol DENTRO de un productor)
+  | 'empleado';        // Operario, contador (rol DENTRO de un productor)
+
+/** Nuevo: rol al nivel del usuario (no productor) */
+export type RolPerfilTipo =
+  | 'super_admin'      // Bebe (puede ver todo)
+  | 'usuario_normal';  // Resto (su rol específico está en cada membresía)
 
 export type PlanTipo = 'trial' | 'basico' | 'pro' | 'enterprise';
 
@@ -55,15 +60,33 @@ export interface Productor {
 
 export interface Perfil {
   id: string;
-  productor_id: string | null;
+  productor_id: string | null;   // (legacy) compat
   nombre: string;
   email: string;
   telefono: string | null;
-  rol: RolUsuarioTipo;
+  rol: RolUsuarioTipo;             // (legacy) compat
+  rol_perfil: RolPerfilTipo;       // nuevo
   activo: boolean;
   ultimo_login: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Nueva tabla: relación N:N usuario ↔ productor */
+export interface Miembro {
+  id: string;
+  perfil_id: string;
+  productor_id: string;
+  rol: 'admin_productor' | 'empleado';
+  activo: boolean;
+  agregado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Combinación útil: una membresía con datos del productor */
+export interface MembresiaConProductor extends Miembro {
+  productor: Pick<Productor, 'id' | 'nombre' | 'slug' | 'nombre_campo' | 'logo_url' | 'color_primario' | 'plan' | 'estado_suscripcion'>;
 }
 
 export interface Suscripcion {
