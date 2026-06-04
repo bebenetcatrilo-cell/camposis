@@ -1,0 +1,341 @@
+// ════════════════════════════════════════════════════════════
+// TIPOS — Campos SIS
+// Matchean los enums y tablas de Supabase
+// ════════════════════════════════════════════════════════════
+
+// ── Enums ──
+export type RolUsuarioTipo =
+  | 'super_admin'      // (legacy) compat
+  | 'admin_productor'  // Dueño del campo (rol DENTRO de un productor)
+  | 'empleado';        // Operario, contador (rol DENTRO de un productor)
+
+/** Nuevo: rol al nivel del usuario (no productor) */
+export type RolPerfilTipo =
+  | 'super_admin'      // Bebe (puede ver todo)
+  | 'usuario_normal';  // Resto (su rol específico está en cada membresía)
+
+export type PlanTipo = 'trial' | 'basico' | 'pro' | 'enterprise';
+
+export type EstadoSuscripcionTipo =
+  | 'activa'
+  | 'vencida'
+  | 'suspendida'
+  | 'cancelada';
+
+// ── Tablas ──
+
+/** Un productor = un cliente del SaaS (tenant) */
+export interface Productor {
+  id: string;
+  nombre: string;
+  slug: string;
+  email_contacto: string;
+  telefono: string | null;
+  whatsapp: string | null;
+
+  nombre_campo: string | null;
+  direccion: string | null;
+  localidad: string | null;
+  provincia: string | null;
+  cuit: string | null;
+
+  logo_url: string | null;
+  color_primario: string;
+  dominio_custom: string | null;
+
+  plan: PlanTipo;
+  estado_suscripcion: EstadoSuscripcionTipo;
+  trial_termina: string | null;
+  proximo_pago: string | null;
+
+  limite_usuarios: number;
+  limite_silos: number;
+
+  activa: boolean;
+  notas_internas: string | null;
+
+  // ── Facturación (Bloque 9) ──
+  punto_venta: string;                    // ej: '0001'
+  condicion_iva_propia: string | null;    // 'ri' / 'monotributo' / 'exento'
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Perfil {
+  id: string;
+  productor_id: string | null;   // (legacy) compat
+  nombre: string;
+  email: string;
+  telefono: string | null;
+  rol: RolUsuarioTipo;             // (legacy) compat
+  rol_perfil: RolPerfilTipo;       // nuevo
+  activo: boolean;
+  ultimo_login: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Nueva tabla: relación N:N usuario ↔ productor */
+export interface Miembro {
+  id: string;
+  perfil_id: string;
+  productor_id: string;
+  rol: 'admin_productor' | 'empleado';
+  activo: boolean;
+  agregado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Combinación útil: una membresía con datos del productor */
+export interface MembresiaConProductor extends Miembro {
+  productor: Pick<Productor, 'id' | 'nombre' | 'slug' | 'nombre_campo' | 'logo_url' | 'color_primario' | 'plan' | 'estado_suscripcion'>;
+}
+
+export interface Suscripcion {
+  id: string;
+  productor_id: string;
+  fecha: string;
+  monto: number;
+  plan: PlanTipo;
+  periodo_desde: string;
+  periodo_hasta: string;
+  metodo_pago: string | null;
+  comprobante_url: string | null;
+  notas: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
+
+// ── Contextos útiles ──
+
+export interface ProductorContexto {
+  productor: Productor;
+  esPublico: boolean;
+}
+
+// ── BLOQUE 5: Productos ──
+export type TipoProducto = 'cereal' | 'hacienda';
+export type UnidadMedida = 'tn' | 'kg' | 'qq' | 'cabezas';
+export type SexoHacienda = 'macho' | 'hembra' | 'mixto';
+
+export interface Producto {
+  id: string;
+  productor_id: string;
+  tipo: TipoProducto;
+  nombre: string;
+  unidad: UnidadMedida;
+  activo: boolean;
+  observaciones: string | null;
+  especie: string | null;
+  variedad: string | null;
+  campania: string | null;
+  grado: string | null;
+  categoria: string | null;
+  raza: string | null;
+  sexo: SexoHacienda | null;
+  edad_aprox_meses: number | null;
+  peso_promedio_kg: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── BLOQUE 6: Clientes ──
+export type TipoCliente = 'acopio' | 'frigorifico' | 'proveedor' | 'particular' | 'otro';
+export type CondicionIva = 'ri' | 'monotributo' | 'exento' | 'consumidor_final' | 'no_categorizado';
+
+export interface Cliente {
+  id: string;
+  productor_id: string;
+  nombre: string;
+  tipo: TipoCliente;
+  cuit: string | null;
+  condicion_iva: CondicionIva;
+  email: string | null;
+  telefono: string | null;
+  whatsapp: string | null;
+  direccion: string | null;
+  localidad: string | null;
+  provincia: string | null;
+  cp: string | null;
+  saldo_cta_cte: number;
+  notas_internas: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ── BLOQUE 7: Silos ──
+export type TipoSilo = 'aereo' | 'bolsa' | 'galpon' | 'tercero' | 'otro';
+export type TipoMovimientoSilo = 'entrada' | 'salida';
+
+export interface Silo {
+  id: string;
+  productor_id: string;
+  nombre: string;
+  tipo: TipoSilo;
+  ubicacion: string | null;
+  capacidad_tn: number | null;
+  observaciones: string | null;
+  activo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MovimientoSilo {
+  id: string;
+  productor_id: string;
+  silo_id: string;
+  producto_id: string;
+  tipo: TipoMovimientoSilo;
+  cantidad_tn: number;
+  campania: string | null;
+  fecha: string;
+  observaciones: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
+
+// ── BLOQUE 8: Presupuestos ──
+export type EstadoPresupuesto = 'pendiente' | 'aprobado' | 'rechazado' | 'facturado';
+
+export interface Presupuesto {
+  id: string;
+  productor_id: string;
+  numero: number;
+  fecha: string;
+  fecha_vencimiento: string | null;
+  cliente_id: string | null;
+  cliente_nombre: string;
+  cliente_cuit: string | null;
+  cliente_condicion_iva: string | null;
+  cliente_direccion: string | null;
+  cliente_localidad: string | null;
+  concepto: string | null;
+  subtotal: number;
+  iva_porcentaje: number;
+  iva_monto: number;
+  total: number;
+  estado: EstadoPresupuesto;
+  notas: string | null;
+  creado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ItemPresupuesto {
+  id: string;
+  presupuesto_id: string;
+  producto_id: string | null;
+  descripcion: string;
+  unidad: string | null;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+  orden: number;
+  created_at: string;
+}
+
+// ── BLOQUE 9: Facturas ──
+export type TipoFactura = 'A' | 'B' | 'C' | 'X';
+export type EstadoFactura = 'borrador' | 'emitida' | 'cobrada' | 'anulada';
+
+export interface Factura {
+  id: string;
+  productor_id: string;
+  tipo: TipoFactura;
+  punto_venta: string;
+  numero: number;
+  fecha: string;
+  cae: string | null;
+  cae_vencimiento: string | null;
+  cliente_id: string | null;
+  cliente_nombre: string;
+  cliente_cuit: string | null;
+  cliente_condicion_iva: string | null;
+  cliente_direccion: string | null;
+  cliente_localidad: string | null;
+  presupuesto_id: string | null;
+  concepto: string | null;
+  subtotal: number;
+  iva_porcentaje: number;
+  iva_monto: number;
+  total: number;
+  estado: EstadoFactura;
+  notas: string | null;
+  forma_pago: string | null;
+  fecha_cobro: string | null;
+  observaciones_cobro: string | null;
+  creado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ItemFactura {
+  id: string;
+  factura_id: string;
+  producto_id: string | null;
+  descripcion: string;
+  unidad: string | null;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+  orden: number;
+  created_at: string;
+}
+
+// ── BLOQUE 10: Cheques ──
+export type EstadoChequeRecibido =
+  | 'cartera' | 'depositado' | 'acreditado' | 'rechazado'
+  | 'endosado' | 'vendido' | 'anulado';
+
+export type EstadoChequeEmitido =
+  | 'emitido' | 'entregado' | 'cobrado' | 'anulado';
+
+export interface ChequeRecibido {
+  id: string;
+  productor_id: string;
+  numero: string;
+  banco_emisor: string;
+  fecha_emision: string;
+  fecha_cobro: string;
+  importe: number;
+  a_nombre_de: string | null;
+  cliente_id: string | null;
+  factura_id: string | null;
+  estado: EstadoChequeRecibido;
+  banco_venta: string | null;
+  fecha_venta: string | null;
+  monto_recibido: number | null;
+  comision_venta: number | null;
+  banco_deposito: string | null;
+  fecha_deposito: string | null;
+  endosado_a: string | null;
+  fecha_endoso: string | null;
+  fecha_rechazo: string | null;
+  motivo_rechazo: string | null;
+  notas: string | null;
+  registrado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChequeEmitido {
+  id: string;
+  productor_id: string;
+  numero: string;
+  banco_propio: string;
+  fecha_emision: string;
+  fecha_pago: string;
+  importe: number;
+  beneficiario: string;
+  concepto: string | null;
+  estado: EstadoChequeEmitido;
+  fecha_entrega: string | null;
+  fecha_cobro: string | null;
+  notas: string | null;
+  registrado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
