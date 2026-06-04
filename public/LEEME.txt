@@ -1,0 +1,244 @@
+═══════════════════════════════════════════════════════════════
+🌾 CAMPOS SIS · VERSIÓN COMPLETA · BLOQUES 1 + 2 + 3 + 4
+═══════════════════════════════════════════════════════════════
+
+CONTENIDO:
+
+  Bloque 1 (base):
+    - Auth con email/password
+    - Multi-tenancy con RLS
+    - Layouts y sidebars
+
+  Bloque 2 (super-admin):
+    - CRUD Productores
+    - Registrar pagos
+    - Búsqueda y filtros
+
+  Bloque 3 (productor):
+    - Dashboard del productor
+    - Configuración del establecimiento + logo
+    - Editar perfil del usuario
+
+  Bloque 4 (MULTI-MEMBERSHIP - NUEVO):
+    - Un usuario puede pertenecer a MÚLTIPLES productores
+    - Selector de productor después del login
+    - Switcher de productor en el sidebar
+    - Gestión de miembros desde super-admin
+
+56 archivos totales.
+
+
+╔══════════════════════════════════════════════════════════════╗
+║ 🚨🚨🚨 ATENCIÓN: ORDEN DE PASOS CRÍTICO 🚨🚨🚨            ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║ Este bloque hace CAMBIOS EN LA BASE DE DATOS.                ║
+║                                                              ║
+║ Tenés que hacer las cosas EN ESTE ORDEN:                     ║
+║                                                              ║
+║   1. CORRER EL SQL PRIMERO (en Supabase)                     ║
+║   2. DESPUÉS subir el código nuevo a GitHub                  ║
+║                                                              ║
+║ Si lo haces al revés, el código va a fallar porque busca     ║
+║ tablas/columnas que todavía no existen.                      ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+
+PASO 1 ─ CORRER SQL EN SUPABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1.1) Abrí: https://supabase.com/dashboard
+1.2) Click en tu proyecto "campossis-prod"
+1.3) Menú lateral → SQL Editor
+1.4) Click "New query"
+1.5) Abrí en tu PC el archivo:
+     migracion-03-multi-membership.sql
+1.6) Copiá TODO el contenido
+1.7) Pegalo en el SQL Editor de Supabase
+1.8) Click "Run" (botón verde abajo a la derecha)
+
+⏳ El SQL puede tardar 5-15 segundos.
+
+✅ Resultado esperado:
+   - "Success. No rows returned" en varias secciones
+   - Al final muestra una tabla con:
+       tabla        | filas
+       miembros     | (tus usuarios migrados)
+       productores  | (tus productores)
+       perfiles     | (todos los perfiles)
+       super_admins | 1 (vos)
+
+❌ Si te da error rojo:
+   - PARÁ todo
+   - Mandame screenshot del error
+   - NO subas el código a GitHub todavía
+
+
+PASO 2 ─ DESCOMPRIMIR ZIP
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) Click derecho en "campossis-completo.zip"
+2) "Extraer todo..."
+3) Te queda la carpeta "campossis-completo" en tu PC
+
+
+PASO 3 ─ BORRAR REPO EN GITHUB
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) Andá a:
+   https://github.com/bebenetcatrilo-cell/campossis
+
+2) Borrá TODO el contenido (carpetas y archivos):
+   - Click en cada archivo → "..." → "Delete file" → Commit
+   - Para carpetas: entrá adentro, borrá archivos, queda vacía
+
+3) Cuando termines GitHub debe decir:
+   "This repository is empty"
+
+
+PASO 4 ─ SUBIR CÓDIGO NUEVO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) En el repo vacío, click "uploading an existing file"
+
+2) Abrí en tu PC la carpeta "campossis-completo"
+
+3) Adentro vas a ver:
+   - app/ (carpeta)
+   - components/ (carpeta)
+   - lib/ (carpeta)
+   - package.json, tsconfig.json, etc.
+   - migracion-01-base.sql
+   - migracion-02-storage.sql
+   - migracion-03-multi-membership.sql (NUEVO)
+   - LEEME.txt, README.md
+
+4) Seleccioná TODO (Ctrl+A) y arrastralo a GitHub
+
+5) Verificá que GitHub detecte los ~56 archivos
+
+6) Commit message:
+   "feat: bloques 1+2+3+4 multi-membership"
+
+7) Click "Commit changes"
+
+
+PASO 5 ─ ESPERAR DEPLOY DE VERCEL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1) Andá a https://vercel.com/dashboard
+2) Click en "campossis"
+3) Verás un deploy en "Building..."
+4) Esperá 2-3 minutos
+5) Cuando diga "Ready" ✅ → seguí al PASO 6
+
+
+PASO 6 ─ PROBAR EL FLUJO MULTI-MEMBERSHIP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ Estos tests son CRÍTICOS para validar el sistema.
+
+6.1) PROBÁ LOGIN DE SUPER-ADMIN:
+     - Abrí: https://camposis.bbnetsystem.com
+     - Logueate con tu super-admin
+     - ✅ Deberías entrar a /super-admin
+
+6.2) CREÁ EL PRIMER PRODUCTOR (Campo A):
+     - Click "+ Nuevo productor"
+     - Nombre: "Campo A SRL"
+     - Email contacto: cualquiera
+     - Plan: Trial
+     - ✅ TILDÁ "Asociar admin ahora"
+     - ❌ DESTILDÁ "Usar usuario existente"
+     - Admin nombre: "Juan Cliente"
+     - Admin email: usá UN email TUYO real (ej: bebe.test@gmail.com)
+     - Click "Crear productor"
+
+6.3) SETEÁ PASSWORD AL USUARIO NUEVO:
+     - Andá a Supabase → Authentication → Users
+     - Encontrá el usuario "bebe.test@gmail.com"
+     - Click en él → botón "..." → "Send password recovery"
+     - Te llega un email para setear contraseña
+     - Alternativa: en el mismo panel, podés tipear una contraseña a mano
+
+6.4) CREÁ EL SEGUNDO PRODUCTOR (Campo B) CON EL MISMO USUARIO:
+     - En super-admin, "+ Nuevo productor" otra vez
+     - Nombre: "Campo B SA"
+     - Email contacto: cualquiera
+     - Plan: Trial
+     - ✅ TILDÁ "Asociar admin ahora"
+     - ✅ TILDÁ "Usar usuario existente"  ← ESTA ES LA NUEVA OPCIÓN
+     - Admin email: el MISMO de antes (bebe.test@gmail.com)
+     - Click "Crear productor"
+     - ✅ Si funciona → tu usuario ahora es admin de 2 productores
+
+6.5) PROBÁ EL SELECTOR DE PRODUCTOR:
+     - Cerrá sesión (super-admin)
+     - Andá al login
+     - Logueate con bebe.test@gmail.com
+     - ✅ DEBERÍA APARECER EL SELECTOR con Campo A y Campo B
+     - Click en Campo A
+
+6.6) PROBÁ EL SWITCHER:
+     - Vas a estar en el panel del productor "Campo A"
+     - Mirá la sidebar arriba: hay un dropdown con el productor activo
+     - Click en el dropdown → debería mostrar Campo A y Campo B
+     - Click en Campo B
+     - ✅ Cambia el contexto → ahora trabajás en Campo B
+
+6.7) ✅ Si todo eso funciona → MULTI-MEMBERSHIP FUNCIONA CORRECTAMENTE
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUÉ FUNCIONALIDADES NUEVAS TIENE EL BLOQUE 4
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ MULTI-MEMBERSHIP
+   Un usuario puede pertenecer a múltiples productores con
+   diferentes roles en cada uno.
+
+✅ SELECTOR DESPUÉS DEL LOGIN
+   Si el usuario tiene 1 productor → entra directo
+   Si tiene 2+ productores → ve un selector
+
+✅ SWITCHER EN SIDEBAR
+   Dropdown que permite cambiar de productor sin desloguearse
+
+✅ NUEVA PÁGINA: Gestión de usuarios (super-admin)
+   - Desde el detalle del productor → "Gestionar usuarios"
+   - Agregar/quitar/reactivar miembros
+   - Cambiar rol (admin/empleado)
+   - Crear usuarios nuevos sin salir del panel
+
+✅ OPCIÓN "USAR USUARIO EXISTENTE" AL CREAR PRODUCTOR
+   Cuando creás un productor podés asociar a un usuario que
+   YA EXISTE (multi-membership) o crear uno nuevo.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROBLEMAS COMUNES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ "Build failed" en Vercel
+   → Mandame screenshot de los logs
+
+❌ Después del login, te pone "No hay productor activo"
+   → Tu usuario no tiene miembros activos
+   → En Supabase: SELECT * FROM miembros WHERE perfil_id = '...';
+
+❌ Error: "es_super_admin() does not exist"
+   → No corriste el SQL del Bloque 4 (migracion-03)
+   → Andá a Supabase y correlo PRIMERO
+
+❌ El selector me muestra 0 productores
+   → Tu usuario no está como miembro de ningún productor
+   → Acordate que la migración del SQL movió los productor_id
+     a la tabla miembros automáticamente
+
+❌ Cualquier otro error → mandame screenshot
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌾 Campos SIS - Versión completa Bloques 1+2+3+4
+═══════════════════════════════════════════════════════════════
