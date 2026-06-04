@@ -1,25 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-/**
- * Extrae el slug del productor desde el hostname.
- * Ejemplos:
- *   donluis.camposis.bbnetsystem.com  → "donluis"  (productor)
- *   camposis.bbnetsystem.com          → null       (super-admin / landing)
- *   localhost:3000                    → null       (dev sin subdominio)
- *   donluis.localhost:3000            → "donluis"  (dev con subdominio)
- */
 function extraerSlugDeHost(host: string | null): string | null {
   if (!host) return null;
   const hostname = host.split(':')[0];
   if (hostname === 'localhost' || hostname === '127.0.0.1') return null;
 
   const partes = hostname.split('.');
-  // Para que sea slug de productor necesitamos al menos 3 partes:
-  // <slug>.camposis.bbnetsystem.com → ["slug", "camposis", "bbnetsystem", "com"]
   if (partes.length >= 3) {
     const slug = partes[0];
-    // Slugs reservados que NO son productores
     if (['app', 'www', 'admin', 'api', 'camposis'].includes(slug)) return null;
     return slug;
   }
@@ -61,18 +50,16 @@ export async function proxy(request: NextRequest) {
   const esSubdominioProductor = slug !== null;
   const esRutaAdmin = pathname.startsWith('/admin');
   const esRutaSuperAdmin = pathname.startsWith('/super-admin');
-  const esRutaAuth = pathname.startsWith('/auth');
+  const esRutaLoginRegistro =
+    pathname === '/auth/login' || pathname === '/auth/registro';
 
-  // Super-admin: solo accesible desde dominio principal (no subdominio productor)
   if (esRutaSuperAdmin && esSubdominioProductor) {
     const url = request.nextUrl.clone();
-    // Sacar el primer subdominio → quedamos en camposis.bbnetsystem.com
     url.hostname = url.hostname.split('.').slice(1).join('.') || 'localhost';
     url.pathname = '/super-admin';
     return NextResponse.redirect(url);
   }
 
-  // /admin requiere login
   if (!user && (esRutaAdmin || esRutaSuperAdmin)) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
@@ -80,10 +67,19 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Ya logueado pero en /auth → al panel correspondiente
-  if (user && esRutaAuth) {
+  if (user && esRutaLoginRegistro) {
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol_perfil')
+      .eq('id', user.id)
+      .single();
+
     const url = request.nextUrl.clone();
-    url.pathname = esSubdominioProductor ? '/admin' : '/super-admin';
+    if (perfil?.rol_perfil === 'super_admin') {
+      url.pathname = '/super-admin';
+    } else {
+      url.pathname = '/auth/seleccionar-productor';
+    }
     return NextResponse.redirect(url);
   }
 
@@ -92,13 +88,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico
-     * - public files (images, etc)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
