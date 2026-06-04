@@ -10,13 +10,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Formatea pesos argentinos.
+ * Formatea pesos argentinos como NÚMERO solamente.
+ * Devuelve "100.000,50" (sin el símbolo $).
+ * El $ se agrega en la UI con `${formatARS(x)}` o equivalente.
  */
 export function formatARS(value: number): string {
   return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value);
 }
 

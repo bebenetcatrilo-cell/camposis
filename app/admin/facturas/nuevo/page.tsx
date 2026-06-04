@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo } from '@/lib/productor-actual';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { FacturaForm } from '../factura-form';
+import { PageHeader } from '@/components/ui/page-header';
 
 export default async function NuevaFacturaPage() {
   const ctx = await getProductorActivo();
@@ -26,32 +26,22 @@ export default async function NuevaFacturaPage() {
     .order('nombre');
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <header>
-        <Link
-          href="/admin/facturas"
-          className="text-sm text-[var(--fg-muted)] hover:text-[var(--primary)]"
-        >
-          ← Volver a facturas
-        </Link>
-        <h1
-          className="text-3xl tracking-tight mt-2"
-          style={{ fontFamily: 'var(--font-serif)' }}
-        >
-          🧾 Nueva factura
-        </h1>
-        <p className="text-[var(--fg-muted)] mt-1">
-          Punto de venta: <strong>{ctx.productor.punto_venta || '0001'}</strong>
-        </p>
-      </header>
+    <div className="space-y-6">
+      <PageHeader
+        title="Nueva factura"
+        backHref="/admin/facturas"
+        backLabel="Volver a facturas"
+        breadcrumbs={[
+          { label: 'Facturas', href: '/admin/facturas' },
+          { label: 'Nueva factura' },
+        ]}
+      />
 
-      <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-        <FacturaForm
-          clientes={clientes ?? []}
-          productos={productos ?? []}
-          puntoVenta={ctx.productor.punto_venta || '0001'}
-        />
-      </div>
+      <FacturaForm
+        clientes={clientes ?? []}
+        productos={productos ?? []}
+        puntoVenta={ctx.productor.punto_venta || '0001'}
+      />
     </div>
   );
 }

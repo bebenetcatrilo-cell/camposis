@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useTransition } from 'react';
 import { crearFacturaAction, editarFacturaAction, eliminarFacturaAction } from '@/lib/actions/facturas';
+import { ComprobanteCards } from '@/components/ui/comprobante-cards';
+import { FormSection } from '@/components/ui/form-section';
 
 type Cliente = {
   id: string;
@@ -223,41 +225,26 @@ export function FacturaForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* TIPO + Fecha */}
-      <section className="space-y-4">
-        <h3 className="font-bold text-sm text-[var(--fg-muted)] uppercase tracking-wider">
-          🧾 Tipo de comprobante
-        </h3>
-        <div className="grid grid-cols-4 gap-2">
-          {(['A', 'B', 'C', 'X'] as const).map((t) => (
-            <button
-              type="button"
-              key={t}
-              onClick={() => setTipo(t)}
-              className={`px-3 py-2.5 border-2 rounded-lg font-bold text-sm transition ${
-                tipo === t
-                  ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
-                  : 'border-[var(--border)] hover:bg-[var(--bg-hover)]'
-              }`}
-            >
-              {t === 'X' ? 'Recibo X' : `Factura ${t}`}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-[var(--fg-muted)]">
-          {tipo === 'A' && 'Factura A: entre Responsables Inscriptos. Discrimina IVA.'}
-          {tipo === 'B' && 'Factura B: de RI a Consumidor Final, Monotributo o Exento. No discrimina IVA.'}
-          {tipo === 'C' && 'Factura C: emitida por Monotributista. Sin IVA discriminado.'}
-          {tipo === 'X' && 'Recibo X: comprobante interno sin valor fiscal.'}
-        </p>
-      </section>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* 1. TIPO DE COMPROBANTE */}
+      <FormSection
+        number={1}
+        title="Tipo de comprobante"
+        description={
+          tipo === 'A'
+            ? 'Entre Responsables Inscriptos. Discrimina IVA.'
+            : tipo === 'B'
+            ? 'De RI a Consumidor Final, Monotributo o Exento. No discrimina IVA.'
+            : tipo === 'C'
+            ? 'Emitida por Monotributista. Sin IVA discriminado.'
+            : 'Comprobante interno sin valor fiscal.'
+        }
+      >
+        <ComprobanteCards value={tipo} onChange={setTipo} />
+      </FormSection>
 
-      {/* CLIENTE */}
-      <section className="space-y-4 pt-4 border-t border-[var(--border)]">
-        <h3 className="font-bold text-sm text-[var(--fg-muted)] uppercase tracking-wider">
-          👤 Cliente y fecha
-        </h3>
+      {/* 2. CLIENTE Y FECHA */}
+      <FormSection number={2} title="Cliente y fecha" required>
 
         <div className="grid md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
@@ -318,13 +305,10 @@ export function FacturaForm({
             className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
           />
         </div>
-      </section>
+      </FormSection>
 
-      {/* ÍTEMS */}
-      <section className="space-y-4 pt-4 border-t border-[var(--border)]">
-        <h3 className="font-bold text-sm text-[var(--fg-muted)] uppercase tracking-wider">
-          🛒 Ítems
-        </h3>
+      {/* 3. ÍTEMS */}
+      <FormSection number={3} title="Ítems" required>
 
         <div className="bg-[var(--bg-hover)] border border-[var(--border)] rounded-lg p-3 space-y-2">
           <label className="block text-xs font-semibold text-[var(--fg-muted)] uppercase tracking-wider">
@@ -445,7 +429,7 @@ export function FacturaForm({
             ))}
           </div>
         )}
-      </section>
+      </FormSection>
 
       {/* TOTALES */}
       <section className="bg-[var(--bg-hover)] border border-[var(--border)] rounded-2xl p-5 space-y-3">
