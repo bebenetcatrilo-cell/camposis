@@ -232,3 +232,51 @@ export interface ItemPresupuesto {
   orden: number;
   created_at: string;
 }
+
+// ── BLOQUE 9: Facturas ──
+export type TipoFactura = 'A' | 'B' | 'C' | 'X';
+export type EstadoFactura = 'borrador' | 'emitida' | 'cobrada' | 'anulada';
+
+export interface Factura {
+  id: string;
+  productor_id: string;
+  tipo: TipoFactura;
+  punto_venta: string;
+  numero: number;
+  fecha: string;
+  cae: string | null;
+  cae_vencimiento: string | null;
+  cliente_id: string | null;
+  cliente_nombre: string;
+  cliente_cuit: string | null;
+  cliente_condicion_iva: string | null;
+  cliente_direccion: string | null;
+  cliente_localidad: string | null;
+  presupuesto_id: string | null;
+  concepto: string | null;
+  subtotal: number;
+  iva_porcentaje: number;
+  iva_monto: number;
+  total: number;
+  estado: EstadoFactura;
+  notas: string | null;
+  forma_pago: string | null;
+  fecha_cobro: string | null;
+  observaciones_cobro: string | null;
+  creado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ItemFactura {
+  id: string;
+  factura_id: string;
+  producto_id: string | null;
+  descripcion: string;
+  unidad: string | null;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+  orden: number;
+  created_at: string;
+}
