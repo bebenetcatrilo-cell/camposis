@@ -8,7 +8,6 @@ import { PageHeader } from '@/components/ui/page-header';
 import { KpiCard } from '@/components/ui/kpi-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { AccionesRapidas } from './acciones-rapidas';
 
 const ESTADOS: Record<string, { label: string; icon: string; color: 'amber' | 'emerald' | 'red' | 'blue' | 'gray' }> = {
   pendiente: { label: 'Pendiente', icon: '⏳', color: 'amber' },
@@ -31,7 +30,7 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
 
   let query = supabase
     .from('presupuestos')
-    .select('id, numero, fecha, cliente_nombre, concepto, total, estado, token_publico, created_at')
+    .select('id, numero, fecha, cliente_nombre, concepto, total, estado, created_at')
     .eq('productor_id', ctx.productor.id);
 
   if (estado !== 'todos') query = query.eq('estado', estado);
@@ -159,7 +158,6 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
                   <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Concepto</th>
                   <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Total</th>
                   <th className="px-5 py-3 text-left text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Estado</th>
-                  <th className="px-5 py-3 text-right text-[10px] uppercase tracking-wider text-[var(--fg-muted)] font-bold">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,15 +190,6 @@ export default async function PresupuestosPage({ searchParams }: { searchParams:
                       </td>
                       <td className="px-5 py-3">
                         <StatusBadge label={est.label} icon={est.icon} color={est.color} />
-                      </td>
-                      <td className="px-5 py-3">
-                        <AccionesRapidas
-                          presupuestoId={p.id}
-                          numero={String(p.numero).padStart(4, '0')}
-                          cliente={p.cliente_nombre}
-                          total={Number(p.total)}
-                          tokenPublico={p.token_publico}
-                        />
                       </td>
                     </tr>
                   );

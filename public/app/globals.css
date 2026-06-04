@@ -80,22 +80,23 @@
   --font-serif: var(--font-serif);
 }
 
-/* ── RESET ── */
-*{margin:0;padding:0;box-sizing:border-box;}
-*{-webkit-tap-highlight-color:transparent;}
+/* ── RESET (dentro de @layer base para no pisar Tailwind) ── */
+@layer base {
+  *{-webkit-tap-highlight-color:transparent;}
 
-html,body{
-  background:var(--bg);
-  color:var(--fg);
-  font-family:var(--font-sans);
-  font-size:14px;
-  line-height:1.45;
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
+  html,body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:var(--font-sans);
+    font-size:14px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+
+  /* ── TIPOGRAFÍA ── */
+  h1,h2,h3,h4,h5,h6{font-weight:600;}
 }
-
-/* ── TIPOGRAFÍA ── */
-h1,h2,h3,h4,h5,h6{font-weight:600;}
 
 .mono{
   font-family:var(--font-mono);
