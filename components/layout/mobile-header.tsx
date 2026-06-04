@@ -12,12 +12,9 @@ const menu = [
   { href: '/admin/clientes', label: '👤 Clientes' },
   { href: '/admin/productos', label: '📦 Productos' },
   { href: '/admin/silos', label: '🌾 Silos' },
-  { href: '/admin/hacienda', label: '🐄 Hacienda' },
   { href: '/admin/presupuestos', label: '📋 Presupuestos' },
   { href: '/admin/facturas', label: '🧾 Facturas' },
-  { href: '/admin/reportes', label: '📈 Reportes' },
-  { href: '/admin/recordatorios', label: '🔔 Recordatorios' },
-  { href: '/admin/usuarios', label: '👥 Usuarios' },
+  { href: '/admin/cheques', label: '💳 Cheques' },
   { href: '/admin/configuracion', label: '⚙️ Configuración' },
   { href: '/admin/suscripcion', label: '💎 Mi plan' },
 ];
