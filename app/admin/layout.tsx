@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getProductorActivo, getMisMembresia } from '@/lib/productor-actual';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
+import { ContextualSidebar } from '@/components/layout/contextual-sidebar';
 import MobileHeader from '@/components/layout/mobile-header';
 
 export default async function AdminLayout({
@@ -24,27 +25,24 @@ export default async function AdminLayout({
     redirect('/auth/login');
   }
 
-  // Super-admin no debería estar acá
   if (perfil.rol_perfil === 'super_admin') {
     redirect('/super-admin');
   }
 
-  // Buscar el productor activo (cookie)
   const productorCtx = await getProductorActivo();
 
   if (!productorCtx) {
-    // No hay productor activo válido → al selector
     redirect('/auth/seleccionar-productor');
   }
 
   const { productor, rol } = productorCtx;
   const rolLabel = rol === 'admin_productor' ? 'Administrador' : 'Empleado';
 
-  // Para el switcher: traer todas las membresías
   const todasMisMembresia = await getMisMembresia();
 
   return (
     <div className="flex min-h-screen">
+      {/* Sidebar principal (siempre fijo izquierda) */}
       <Sidebar
         nombreUsuario={perfil.nombre}
         rolLabel={rolLabel}
@@ -55,16 +53,31 @@ export default async function AdminLayout({
         productorActivoId={productor.id}
         membresia={todasMisMembresia}
       />
-      <main className="flex-1 min-w-0">
+
+      {/* Contenedor principal */}
+      <main className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile header (solo móvil) */}
         <MobileHeader
           nombreUsuario={perfil.nombre}
           rolLabel={rolLabel}
           nombreProductor={productor.nombre_campo ?? productor.nombre}
         />
+
+        {/* Topbar (solo desktop) */}
         <div className="hidden lg:block">
           <Topbar nombreUsuario={perfil.nombre} rolLabel={rolLabel} />
         </div>
-        <div className="p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto">{children}</div>
+
+        {/* Contenido + Sidebar contextual */}
+        <div className="flex-1 p-4 md:p-6 lg:p-8">
+          <div className="max-w-[1400px] mx-auto flex gap-6">
+            {/* Contenido principal (izquierda) */}
+            <div className="flex-1 min-w-0">{children}</div>
+
+            {/* Sidebar contextual (solo XL hacia arriba) */}
+            <ContextualSidebar />
+          </div>
+        </div>
       </main>
     </div>
   );
