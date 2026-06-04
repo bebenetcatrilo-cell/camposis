@@ -21,28 +21,18 @@ export default async function AdminLayout({
     .eq('id', user.id)
     .single();
 
-  if (!perfil || !perfil.activo) {
-    redirect('/auth/login');
-  }
-
-  if (perfil.rol_perfil === 'super_admin') {
-    redirect('/super-admin');
-  }
+  if (!perfil || !perfil.activo) redirect('/auth/login');
+  if (perfil.rol_perfil === 'super_admin') redirect('/super-admin');
 
   const productorCtx = await getProductorActivo();
-
-  if (!productorCtx) {
-    redirect('/auth/seleccionar-productor');
-  }
+  if (!productorCtx) redirect('/auth/seleccionar-productor');
 
   const { productor, rol } = productorCtx;
   const rolLabel = rol === 'admin_productor' ? 'Administrador' : 'Empleado';
-
   const todasMisMembresia = await getMisMembresia();
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar principal (siempre fijo izquierda) */}
       <Sidebar
         nombreUsuario={perfil.nombre}
         rolLabel={rolLabel}
@@ -54,27 +44,20 @@ export default async function AdminLayout({
         membresia={todasMisMembresia}
       />
 
-      {/* Contenedor principal */}
       <main className="flex-1 min-w-0 flex flex-col">
-        {/* Mobile header (solo móvil) */}
         <MobileHeader
           nombreUsuario={perfil.nombre}
           rolLabel={rolLabel}
           nombreProductor={productor.nombre_campo ?? productor.nombre}
         />
 
-        {/* Topbar (solo desktop) */}
         <div className="hidden lg:block">
           <Topbar nombreUsuario={perfil.nombre} rolLabel={rolLabel} />
         </div>
 
-        {/* Contenido + Sidebar contextual */}
-        <div className="flex-1 p-4 md:p-6 lg:p-8">
-          <div className="max-w-[1400px] mx-auto flex gap-6">
-            {/* Contenido principal (izquierda) */}
+        <div className="flex-1 p-4 md:p-5">
+          <div className="max-w-[1400px] mx-auto flex gap-4">
             <div className="flex-1 min-w-0">{children}</div>
-
-            {/* Sidebar contextual (solo XL hacia arriba) */}
             <ContextualSidebar />
           </div>
         </div>

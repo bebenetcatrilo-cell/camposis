@@ -28,35 +28,29 @@ export function PageHeader({
   badge,
 }: Props) {
   return (
-    <header className="mb-6">
-      {/* Back link */}
+    <header className="mb-4">
       {backHref && (
         <Link
           href={backHref}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-3 text-sm font-medium text-[var(--fg-muted)] hover:text-[var(--primary)] border border-[var(--border)] rounded-lg hover:bg-white transition bg-transparent"
+          className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[var(--fg-muted)] hover:text-[var(--primary)] mb-2 transition"
         >
-          <ArrowLeft className="w-3.5 h-3.5" strokeWidth={2} />
+          <ArrowLeft className="w-3 h-3" strokeWidth={2} />
           {backLabel ?? 'Volver'}
         </Link>
       )}
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex-1 min-w-0">
-          {/* Title */}
-          <h1
-            className="text-[34px] tracking-tight leading-none font-extrabold flex items-center gap-3 flex-wrap"
-            style={{ fontFamily: 'var(--font-serif)' }}
-          >
-            {icon && <span>{icon}</span>}
+          <h1 className="text-[20px] font-semibold leading-tight flex items-center gap-2 flex-wrap">
+            {icon && <span className="text-[20px]">{icon}</span>}
             <span>{title}</span>
             {badge}
           </h1>
 
-          {/* Breadcrumbs DEBAJO del título (estilo foto) */}
           {breadcrumbs && breadcrumbs.length > 0 && (
-            <nav className="flex items-center gap-1.5 text-sm text-[var(--fg-muted)] mt-2">
+            <nav className="flex items-center gap-1 text-[12px] text-[var(--fg-muted)] mt-1">
               {breadcrumbs.map((b, i) => (
-                <span key={i} className="flex items-center gap-1.5">
+                <span key={i} className="flex items-center gap-1">
                   {i > 0 && <ChevronRight className="w-3 h-3" strokeWidth={2} />}
                   {b.href ? (
                     <Link href={b.href} className="hover:text-[var(--primary)] transition">
@@ -71,10 +65,10 @@ export function PageHeader({
           )}
 
           {subtitle && !breadcrumbs && (
-            <p className="text-[var(--fg-muted)] mt-2 text-sm">{subtitle}</p>
+            <p className="text-[var(--fg-muted)] mt-1 text-[12px]">{subtitle}</p>
           )}
         </div>
-        {actions && <div className="flex gap-2 flex-wrap items-center">{actions}</div>}
+        {actions && <div className="flex gap-1.5 flex-wrap items-center">{actions}</div>}
       </div>
     </header>
   );
