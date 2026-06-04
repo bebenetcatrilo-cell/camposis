@@ -12,6 +12,15 @@ const PROVINCIAS = [
   'Tierra del Fuego', 'Tucumán',
 ];
 
+function generarPasswordRandom(): string {
+  const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let pass = '';
+  for (let i = 0; i < 12; i++) {
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return pass + '!';
+}
+
 export function NuevoProductorForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,6 +29,9 @@ export function NuevoProductorForm() {
   const [crearUsuario, setCrearUsuario] = useState(true);
   const [usarExistente, setUsarExistente] = useState(false);
   const [plan, setPlan] = useState('trial');
+  const [password, setPassword] = useState('');
+  const [confirmar, setConfirmar] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
 
   function handleNombreChange(v: string) {
     setNombre(v);
@@ -28,9 +40,24 @@ export function NuevoProductorForm() {
     }
   }
 
+  function handleGenerar() {
+    const nueva = generarPasswordRandom();
+    setPassword(nueva);
+    setConfirmar(nueva);
+    setMostrarPassword(true);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (crearUsuario && !usarExistente) {
+      if (password !== confirmar) {
+        setError('Las contraseñas no coinciden');
+        return;
+      }
+    }
+
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     formData.set('crear_usuario_admin', crearUsuario ? 'true' : 'false');
@@ -243,9 +270,7 @@ export function NuevoProductorForm() {
                   className="mt-1 w-4 h-4 accent-[var(--primary)]"
                 />
                 <div className="flex-1">
-                  <div className="text-sm font-medium">
-                    Usar usuario existente
-                  </div>
+                  <div className="text-sm font-medium">Usar usuario existente</div>
                   <div className="text-xs text-[var(--fg-muted)]">
                     Si este admin ya es usuario de otro productor (multi-membership),
                     tildá esto. Solo necesitás su email.
@@ -257,11 +282,12 @@ export function NuevoProductorForm() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">
-                  Email del admin {usarExistente ? '(existente)' : ''}
+                  Email del admin *
                 </label>
                 <input
                   name="admin_email"
                   type="email"
+                  required={crearUsuario}
                   className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                   placeholder="juan@cliente.com"
                 />
@@ -269,11 +295,12 @@ export function NuevoProductorForm() {
               {!usarExistente && (
                 <div>
                   <label className="block text-sm font-medium mb-1.5">
-                    Nombre del admin (nuevo)
+                    Nombre del admin *
                   </label>
                   <input
                     name="admin_nombre"
                     type="text"
+                    required={crearUsuario && !usarExistente}
                     className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
                     placeholder="Juan Pérez"
                   />
@@ -282,11 +309,66 @@ export function NuevoProductorForm() {
             </div>
 
             {!usarExistente && (
-              <p className="text-xs text-[var(--fg-muted)] bg-blue-50 border border-blue-200 p-3 rounded-lg">
-                ℹ️ El usuario se crea con contraseña autogenerada. Después de crearlo
-                tenés que ir a Supabase → Authentication → Users → seleccionar el
-                usuario → "Reset password" → setear una contraseña.
-              </p>
+              <>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Contraseña inicial *
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        name="admin_password"
+                        type={mostrarPassword ? 'text' : 'password'}
+                        required={crearUsuario && !usarExistente}
+                        minLength={8}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="flex-1 px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                        placeholder="Mínimo 8 caracteres"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarPassword((v) => !v)}
+                        className="px-3 py-2 border border-[var(--border)] rounded-lg text-sm hover:bg-[var(--bg-hover)] transition"
+                        title={mostrarPassword ? 'Ocultar' : 'Mostrar'}
+                      >
+                        {mostrarPassword ? '🙈' : '👁'}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1.5">
+                      Confirmar contraseña *
+                    </label>
+                    <input
+                      type={mostrarPassword ? 'text' : 'password'}
+                      required={crearUsuario && !usarExistente}
+                      minLength={8}
+                      value={confirmar}
+                      onChange={(e) => setConfirmar(e.target.value)}
+                      className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"
+                      placeholder="Repetí la contraseña"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGenerar}
+                  className="text-sm text-[var(--primary)] hover:underline"
+                >
+                  🎲 Generar contraseña automática
+                </button>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900 space-y-1">
+                  <p className="font-semibold">💡 Esta contraseña la vas a usar para entregarle el acceso al cliente.</p>
+                  <p>Te recomiendo:</p>
+                  <ul className="list-disc list-inside ml-2 space-y-0.5">
+                    <li>Mandala por WhatsApp/email cuando se la des al cliente</li>
+                    <li>Pedile que la cambie en su primer login (desde "Mi perfil")</li>
+                  </ul>
+                </div>
+              </>
             )}
           </>
         )}

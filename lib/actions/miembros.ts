@@ -19,9 +19,6 @@ async function asegurarSuperAdmin() {
   return user;
 }
 
-/**
- * Agregar un usuario (nuevo o existente) como miembro de un productor.
- */
 export async function agregarMiembroAction(formData: FormData) {
   try {
     await asegurarSuperAdmin();
@@ -32,6 +29,7 @@ export async function agregarMiembroAction(formData: FormData) {
   const productor_id = String(formData.get('productor_id') || '');
   const email = String(formData.get('email') || '').trim().toLowerCase();
   const nombre = String(formData.get('nombre') || '').trim();
+  const password = String(formData.get('password') || '');
   const rol = String(formData.get('rol') || 'empleado') as 'admin_productor' | 'empleado';
   const crear_si_no_existe = formData.get('crear_si_no_existe') === 'true';
 
@@ -43,7 +41,6 @@ export async function agregarMiembroAction(formData: FormData) {
 
   const admin = createAdminClient();
 
-  // Buscar perfil por email
   let perfilId: string | null = null;
   const { data: perfilExistente } = await admin
     .from('perfiles')
@@ -60,10 +57,14 @@ export async function agregarMiembroAction(formData: FormData) {
       };
     }
     if (!nombre) return { error: 'Falta el nombre del usuario nuevo' };
+    if (!password || password.length < 8) {
+      return { error: 'La contraseña debe tener al menos 8 caracteres' };
+    }
 
-    // Crear usuario
+    // Crear usuario CON la contraseña que ingresó el super-admin
     const { data: userData, error: errUser } = await admin.auth.admin.createUser({
       email,
+      password,  // ← AHORA SE PASA LA CONTRASEÑA
       email_confirm: true,
       user_metadata: { nombre },
     });
@@ -74,7 +75,6 @@ export async function agregarMiembroAction(formData: FormData) {
     perfilId = userData.user!.id;
   }
 
-  // Verificar si ya es miembro
   const { data: yaEsMiembro } = await admin
     .from('miembros')
     .select('id, activo')
@@ -86,14 +86,12 @@ export async function agregarMiembroAction(formData: FormData) {
     if (yaEsMiembro.activo) {
       return { error: 'Este usuario ya es miembro de este productor' };
     }
-    // Reactivar
     const { error } = await admin
       .from('miembros')
       .update({ activo: true, rol })
       .eq('id', yaEsMiembro.id);
     if (error) return { error: 'Error: ' + error.message };
   } else {
-    // Crear membresía
     const { error } = await admin
       .from('miembros')
       .insert({
@@ -110,9 +108,6 @@ export async function agregarMiembroAction(formData: FormData) {
   return { ok: true };
 }
 
-/**
- * Cambiar el rol de un miembro.
- */
 export async function cambiarRolMiembroAction(
   miembroId: string,
   nuevoRol: 'admin_productor' | 'empleado'
@@ -130,13 +125,9 @@ export async function cambiarRolMiembroAction(
     .eq('id', miembroId);
 
   if (error) return { error: 'Error: ' + error.message };
-
   return { ok: true };
 }
 
-/**
- * Desactivar membresía (el usuario deja de tener acceso a ese productor).
- */
 export async function quitarMiembroAction(miembroId: string, productorId: string) {
   try {
     await asegurarSuperAdmin();
@@ -151,14 +142,10 @@ export async function quitarMiembroAction(miembroId: string, productorId: string
     .eq('id', miembroId);
 
   if (error) return { error: 'Error: ' + error.message };
-
   revalidatePath(`/super-admin/productores/${productorId}/usuarios`);
   return { ok: true };
 }
 
-/**
- * Reactivar membresía.
- */
 export async function reactivarMiembroAction(miembroId: string, productorId: string) {
   try {
     await asegurarSuperAdmin();
@@ -173,7 +160,6 @@ export async function reactivarMiembroAction(miembroId: string, productorId: str
     .eq('id', miembroId);
 
   if (error) return { error: 'Error: ' + error.message };
-
   revalidatePath(`/super-admin/productores/${productorId}/usuarios`);
   return { ok: true };
 }

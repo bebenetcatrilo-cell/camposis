@@ -56,9 +56,9 @@ export async function crearProductorAction(formData: FormData) {
   const crear_usuario_admin = formData.get('crear_usuario_admin') === 'true';
   const admin_email = String(formData.get('admin_email') || '').trim();
   const admin_nombre = String(formData.get('admin_nombre') || '').trim();
+  const admin_password = String(formData.get('admin_password') || '');
   const usar_existente = formData.get('usar_existente') === 'true';
 
-  // Validaciones
   if (!nombre) return { error: 'El nombre es obligatorio' };
   if (!email_contacto) return { error: 'El email de contacto es obligatorio' };
 
@@ -75,14 +75,16 @@ export async function crearProductorAction(formData: FormData) {
 
   if (crear_usuario_admin) {
     if (!admin_email) return { error: 'Falta el email del admin del productor' };
-    if (!usar_existente && !admin_nombre) {
-      return { error: 'Falta el nombre del admin del productor' };
+    if (!usar_existente) {
+      if (!admin_nombre) return { error: 'Falta el nombre del admin del productor' };
+      if (!admin_password || admin_password.length < 8) {
+        return { error: 'La contraseña del admin debe tener al menos 8 caracteres' };
+      }
     }
   }
 
   const admin = createAdminClient();
 
-  // Verificar slug
   const { data: existente } = await admin
     .from('productores')
     .select('id')
@@ -92,7 +94,6 @@ export async function crearProductorAction(formData: FormData) {
     return { error: `Ya existe un productor con el slug "${slug}"` };
   }
 
-  // Crear productor
   const { data: nuevo, error: errInsert } = await admin
     .from('productores')
     .insert({
@@ -120,12 +121,10 @@ export async function crearProductorAction(formData: FormData) {
     return { error: 'Error al crear: ' + errInsert.message };
   }
 
-  // Si se pidió, crear o asociar usuario admin
   if (crear_usuario_admin && nuevo) {
     let perfilId: string | null = null;
 
     if (usar_existente) {
-      // Buscar perfil existente por email
       const { data: perfilExistente } = await admin
         .from('perfiles')
         .select('id, nombre')
@@ -140,9 +139,10 @@ export async function crearProductorAction(formData: FormData) {
       }
       perfilId = perfilExistente.id;
     } else {
-      // Crear usuario nuevo
+      // Crear usuario CON la contraseña que ingresó el super-admin
       const { data: userData, error: errUser } = await admin.auth.admin.createUser({
         email: admin_email,
+        password: admin_password,  // ← AHORA SE PASA LA CONTRASEÑA
         email_confirm: true,
         user_metadata: {
           nombre: admin_nombre,
@@ -150,7 +150,6 @@ export async function crearProductorAction(formData: FormData) {
       });
 
       if (errUser) {
-        // Si el error es porque el email ya existe, sugerir usar_existente
         if (errUser.message.toLowerCase().includes('already registered')
           || errUser.message.toLowerCase().includes('already exists')) {
           return {
@@ -166,7 +165,6 @@ export async function crearProductorAction(formData: FormData) {
       perfilId = userData.user!.id;
     }
 
-    // Crear membresía
     const { error: errMembresia } = await admin
       .from('miembros')
       .insert({
@@ -190,9 +188,8 @@ export async function crearProductorAction(formData: FormData) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// EDITAR PRODUCTOR
+// EDITAR PRODUCTOR (sin cambios)
 // ──────────────────────────────────────────────────────────────
-
 export async function editarProductorAction(formData: FormData) {
   try {
     await asegurarSuperAdmin();
@@ -223,16 +220,8 @@ export async function editarProductorAction(formData: FormData) {
   const { error } = await admin
     .from('productores')
     .update({
-      nombre,
-      email_contacto,
-      telefono,
-      whatsapp,
-      nombre_campo,
-      direccion,
-      localidad,
-      provincia,
-      cuit,
-      plan,
+      nombre, email_contacto, telefono, whatsapp, nombre_campo, direccion,
+      localidad, provincia, cuit, plan,
       trial_termina: trial_termina || null,
       proximo_pago: proximo_pago || null,
       notas_internas,
@@ -247,9 +236,6 @@ export async function editarProductorAction(formData: FormData) {
 }
 
 // ──────────────────────────────────────────────────────────────
-// SUSPENDER / REACTIVAR
-// ──────────────────────────────────────────────────────────────
-
 export async function cambiarEstadoProductorAction(
   productorId: string,
   nuevoEstado: 'activa' | 'vencida' | 'suspendida' | 'cancelada'
@@ -276,10 +262,6 @@ export async function cambiarEstadoProductorAction(
   return { ok: true };
 }
 
-// ──────────────────────────────────────────────────────────────
-// ELIMINAR
-// ──────────────────────────────────────────────────────────────
-
 export async function eliminarProductorAction(productorId: string) {
   try {
     await asegurarSuperAdmin();
@@ -298,10 +280,6 @@ export async function eliminarProductorAction(productorId: string) {
   revalidatePath('/super-admin/productores');
   redirect('/super-admin/productores');
 }
-
-// ──────────────────────────────────────────────────────────────
-// REGISTRAR PAGO
-// ──────────────────────────────────────────────────────────────
 
 export async function registrarPagoAction(formData: FormData) {
   try {
@@ -329,14 +307,8 @@ export async function registrarPagoAction(formData: FormData) {
   const { error } = await admin
     .from('suscripciones')
     .insert({
-      productor_id,
-      monto,
-      plan,
-      periodo_desde,
-      periodo_hasta,
-      metodo_pago,
-      notas,
-      registrado_por: user?.id ?? null,
+      productor_id, monto, plan, periodo_desde, periodo_hasta,
+      metodo_pago, notas, registrado_por: user?.id ?? null,
     });
 
   if (error) return { error: 'Error al registrar pago: ' + error.message };
@@ -353,5 +325,33 @@ export async function registrarPagoAction(formData: FormData) {
   revalidatePath(`/super-admin/productores/${productor_id}`);
   revalidatePath('/super-admin/productores');
   revalidatePath('/super-admin');
+  return { ok: true };
+}
+
+// ──────────────────────────────────────────────────────────────
+// CAMBIAR CONTRASEÑA DE UN USUARIO (acción del super-admin)
+// ──────────────────────────────────────────────────────────────
+export async function cambiarPasswordUsuarioAction(
+  usuarioId: string,
+  nuevaPassword: string
+) {
+  try {
+    await asegurarSuperAdmin();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Sin permisos' };
+  }
+
+  if (!usuarioId) return { error: 'Falta el usuario' };
+  if (!nuevaPassword || nuevaPassword.length < 8) {
+    return { error: 'La contraseña debe tener al menos 8 caracteres' };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(usuarioId, {
+    password: nuevaPassword,
+  });
+
+  if (error) return { error: 'Error: ' + error.message };
+
   return { ok: true };
 }
