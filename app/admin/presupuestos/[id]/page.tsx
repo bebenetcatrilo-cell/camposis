@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CambiarEstado } from './cambiar-estado';
 import { CompartirBtn } from './compartir-btn';
 import { ImprimirBtn } from './imprimir-btn';
+import { AccionesExtra } from './acciones-extra';
 import { formatARS, formatFecha } from '@/lib/utils';
 
 const ESTADOS: Record<string, { label: string; icon: string; bg: string; text: string }> = {
@@ -82,6 +83,7 @@ export default async function PresupuestoDetallePage({
                 productor={productor}
               />
             )}
+            <AccionesExtra presupuestoId={pres.id} numero={numFmt} estado={pres.estado} />
             <CambiarEstado id={pres.id} estado={pres.estado} />
             <Link
               href={`/admin/presupuestos/${pres.id}/editar`}

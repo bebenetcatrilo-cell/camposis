@@ -3,6 +3,7 @@ import { getProductorActivo } from '@/lib/productor-actual';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CambiarEstadoFactura } from './cambiar-estado';
+import { ImprimirBtn } from './imprimir-btn';
 import { formatARS, formatFecha } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -57,6 +58,12 @@ export default async function FacturaDetallePage({
     .eq('factura_id', id)
     .order('orden');
 
+  const { data: productor } = await supabase
+    .from('productores')
+    .select('nombre, nombre_campo, cuit, direccion, localidad, provincia, telefono, email_contacto, logo_url, color_primario, condicion_iva_propia')
+    .eq('id', ctx.productor.id)
+    .single();
+
   const tipoInfo = TIPOS[fact.tipo] ?? { label: fact.tipo, color: 'gray' as const };
   const est = ESTADOS[fact.estado] ?? ESTADOS.borrador;
   const numeroFmt = `${fact.punto_venta}-${String(fact.numero).padStart(8, '0')}`;
@@ -77,6 +84,9 @@ export default async function FacturaDetallePage({
         }
         actions={
           <div className="flex gap-2 flex-wrap">
+            {productor && items && (
+              <ImprimirBtn factura={fact} items={items} productor={productor} />
+            )}
             <CambiarEstadoFactura id={fact.id} estado={fact.estado} cae={fact.cae} />
             {fact.estado === 'borrador' && (
               <Link
