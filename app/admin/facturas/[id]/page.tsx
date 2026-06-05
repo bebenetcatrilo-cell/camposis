@@ -87,6 +87,14 @@ export default async function FacturaDetallePage({
             {productor && items && (
               <ImprimirBtn factura={fact} items={items} productor={productor} />
             )}
+            {(fact.estado === 'emitida' || fact.estado === 'parcial') && fact.cliente_id && (
+              <Link
+                href={`/admin/cobros/nuevo?cliente_id=${fact.cliente_id}`}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-[var(--green)] text-white rounded-lg font-semibold hover:opacity-90 transition text-sm"
+              >
+                💰 Cobrar
+              </Link>
+            )}
             <CambiarEstadoFactura id={fact.id} estado={fact.estado} cae={fact.cae} />
             {fact.estado === 'borrador' && (
               <Link
