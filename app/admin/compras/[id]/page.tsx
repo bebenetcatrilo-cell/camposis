@@ -59,7 +59,17 @@ export default async function CompraDetallePage({ params }: { params: Params }) 
         ]}
         actions={
           esAdmin && compra.estado !== 'anulada' && (
-            <AnularBtn id={compra.id} />
+            <div className="flex gap-2">
+              {(compra.estado === 'pendiente' || compra.estado === 'parcial') && (
+                <Link
+                  href={`/admin/pagos-proveedor/nuevo?proveedor_id=${compra.proveedor_id}`}
+                  className="px-4 py-2 bg-[var(--green)] text-white rounded-lg font-semibold hover:opacity-90 transition text-[13px] flex items-center gap-2"
+                >
+                  💸 Registrar pago
+                </Link>
+              )}
+              <AnularBtn id={compra.id} />
+            </div>
           )
         }
       />
