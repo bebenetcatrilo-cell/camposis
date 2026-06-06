@@ -6,6 +6,7 @@ import { Users, Ban, FileText } from 'lucide-react';
 import { formatARS, formatFecha } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { AnularBtn } from './anular-btn';
+import { ReciboBtn } from './recibo-btn';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,7 +53,27 @@ export default async function CobroDetallePage({ params }: { params: Params }) {
           { label: 'Cobros', href: '/admin/cobros' },
           { label: `#${numFmt}` },
         ]}
-        actions={esAdmin && !cobro.anulado && <AnularBtn id={cobro.id} />}
+        actions={
+          !cobro.anulado && (
+            <div className="flex gap-2 flex-wrap">
+              <ReciboBtn
+                cobro={cobro}
+                productor={{
+                  nombre: ctx.productor.nombre,
+                  nombre_campo: ctx.productor.nombre_campo ?? null,
+                  cuit: ctx.productor.cuit ?? null,
+                  direccion: ctx.productor.direccion ?? null,
+                  localidad: ctx.productor.localidad ?? null,
+                  telefono: ctx.productor.telefono ?? null,
+                  email_contacto: ctx.productor.email_contacto ?? null,
+                  logo_url: ctx.productor.logo_url ?? null,
+                  color_primario: ctx.productor.color_primario ?? '#4a7c2a',
+                }}
+              />
+              {esAdmin && <AnularBtn id={cobro.id} />}
+            </div>
+          )
+        }
       />
 
       {cobro.anulado && (
