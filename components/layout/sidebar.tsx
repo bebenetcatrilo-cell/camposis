@@ -13,6 +13,7 @@ import {
   Beef,
   FileText,
   Receipt,
+  ClipboardList,
   CreditCard,
   Wallet,
   DollarSign,
@@ -38,6 +39,7 @@ const menuPrincipal = [
   { href: '/admin/hacienda', label: 'Hacienda', icon: Beef },
   { href: '/admin/presupuestos', label: 'Presupuestos', icon: FileText },
   { href: '/admin/facturas', label: 'Facturas', icon: Receipt },
+  { href: '/admin/remitos', label: 'Remitos', icon: ClipboardList },
   { href: '/admin/cobros', label: 'Cobros', icon: DollarSign },
   { href: '/admin/compras', label: 'Compras', icon: ShoppingCart },
   { href: '/admin/pagos-proveedor', label: 'Pagos a Prov.', icon: Wallet },
@@ -165,7 +167,7 @@ export function Sidebar({
       {/* CENTRO DE AYUDA */}
       <div className="px-2 py-1">
         <Link
-          href="#"
+          href="/admin/ayuda"
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-[8px] text-[12px] font-medium text-[var(--fg-muted)] hover:bg-[var(--bg-hover)] transition"
         >
           <HelpCircle className="w-[14px] h-[14px]" strokeWidth={1.8} />

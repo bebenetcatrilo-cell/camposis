@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { CambiarEstadoFactura } from './cambiar-estado';
 import { ImprimirBtn } from './imprimir-btn';
+import { GenerarRemitoBtn } from './generar-remito-btn';
 import { formatARS, formatFecha } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -94,6 +95,9 @@ export default async function FacturaDetallePage({
               >
                 💰 Cobrar
               </Link>
+            )}
+            {fact.estado !== 'borrador' && fact.estado !== 'anulada' && (
+              <GenerarRemitoBtn facturaId={fact.id} />
             )}
             <CambiarEstadoFactura id={fact.id} estado={fact.estado} cae={fact.cae} />
             {fact.estado === 'borrador' && (
