@@ -285,14 +285,16 @@ export async function cambiarEstadoFacturaAction(
     return { error: e instanceof Error ? e.message : 'Sin permisos' };
   }
 
+  // El cobro se registra desde el módulo Cobros (imputaciones, cheques, saldo).
+  // Ya no se marca "cobrada" directamente desde la factura.
+  if (nuevoEstado === 'cobrada') {
+    return { error: 'Registrá el cobro desde el módulo Cobros, no desde la factura.' };
+  }
+
   const supabase = await createClient();
 
-  const updates: any = { estado: nuevoEstado };
-  if (nuevoEstado === 'cobrada') {
-    updates.forma_pago = data?.forma_pago ?? null;
-    updates.fecha_cobro = data?.fecha_cobro ?? new Date().toISOString().slice(0, 10);
-    updates.observaciones_cobro = data?.observaciones_cobro ?? null;
-  } else if (nuevoEstado === 'anulada') {
+  const updates: { estado: string; observaciones_cobro?: string | null } = { estado: nuevoEstado };
+  if (nuevoEstado === 'anulada') {
     updates.observaciones_cobro = data?.observaciones_cobro ?? null;
   }
 

@@ -183,3 +183,23 @@ export async function eliminarClienteAction(clienteId: string) {
   revalidatePath('/admin/clientes');
   redirect('/admin/clientes');
 }
+
+// ─────────────────────────────────────────────────────────────
+// Recalcular saldos de cuenta corriente desde las facturas.
+// Reconstruye clientes.saldo_cta_cte = suma de (total − cobrado)
+// de las facturas emitida/parcial/cobrada. Útil para sincronizar.
+// ─────────────────────────────────────────────────────────────
+export async function recalcularSaldosClientesAction() {
+  const ctx = await getProductorActivo();
+  if (!ctx) return { error: 'No autorizado' };
+  if (ctx.rol !== 'admin_productor') return { error: 'Solo admins' };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc('recalcular_saldos_clientes', {
+    p_productor_id: ctx.productor.id,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin/clientes');
+  return { ok: true };
+}

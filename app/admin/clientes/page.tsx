@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Users, TrendingUp, TrendingDown, Wallet, Plus, MessageCircle, Mail, Phone } from 'lucide-react';
 import { TogglerActivo } from './toggler';
+import { RecalcularSaldosBtn } from './recalcular-btn';
 import { formatARS } from '@/lib/utils';
 import { PageHeader } from '@/components/ui/page-header';
 import { KpiCard } from '@/components/ui/kpi-card';
@@ -80,13 +81,16 @@ export default async function ClientesPage({
         icon="👥"
         subtitle="Acopios, frigoríficos, proveedores y particulares"
         actions={
-          <Link
-            href="/admin/clientes/nuevo"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
-          >
-            <Plus className="w-4 h-4" strokeWidth={2.4} />
-            Nuevo cliente
-          </Link>
+          <div className="flex gap-2 flex-wrap">
+            {ctx.rol === 'admin_productor' && <RecalcularSaldosBtn />}
+            <Link
+              href="/admin/clientes/nuevo"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[var(--primary)] text-white rounded-lg font-semibold hover:bg-[var(--primary-h)] transition shadow-sm text-sm"
+            >
+              <Plus className="w-4 h-4" strokeWidth={2.4} />
+              Nuevo cliente
+            </Link>
+          </div>
         }
       />
 

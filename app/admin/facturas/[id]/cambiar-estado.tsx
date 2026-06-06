@@ -15,11 +15,8 @@ export function CambiarEstadoFactura({
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
-  const [modal, setModal] = useState<'cobrar' | 'anular' | 'cae' | null>(null);
+  const [modal, setModal] = useState<'anular' | 'cae' | null>(null);
 
-  const [formaPago, setFormaPago] = useState('transferencia');
-  const [fechaCobro, setFechaCobro] = useState(new Date().toISOString().slice(0, 10));
-  const [obsCobro, setObsCobro] = useState('');
   const [motivoAnular, setMotivoAnular] = useState('');
   const [caeInput, setCaeInput] = useState(cae ?? '');
   const [caeVenc, setCaeVenc] = useState('');
@@ -29,22 +26,6 @@ export function CambiarEstadoFactura({
       const r = await cambiarEstadoFacturaAction(id, 'emitida');
       if (r?.error) alert(r.error);
       else router.refresh();
-    });
-  }
-
-  function confirmarCobro() {
-    if (!formaPago) return alert('Elegí forma de pago');
-    startTransition(async () => {
-      const r = await cambiarEstadoFacturaAction(id, 'cobrada', {
-        forma_pago: formaPago,
-        fecha_cobro: fechaCobro,
-        observaciones_cobro: obsCobro || undefined,
-      });
-      if (r?.error) alert(r.error);
-      else {
-        setModal(null);
-        router.refresh();
-      }
     });
   }
 
@@ -59,15 +40,6 @@ export function CambiarEstadoFactura({
         setModal(null);
         router.refresh();
       }
-    });
-  }
-
-  function descobrar() {
-    if (!confirm('¿Sacar el cobro y volver a "Emitida"?')) return;
-    startTransition(async () => {
-      const r = await cambiarEstadoFacturaAction(id, 'emitida');
-      if (r?.error) alert(r.error);
-      else router.refresh();
     });
   }
 
@@ -96,15 +68,8 @@ export function CambiarEstadoFactura({
           </button>
         )}
 
-        {estado === 'emitida' && (
+        {(estado === 'emitida' || estado === 'parcial') && (
           <>
-            <button
-              onClick={() => setModal('cobrar')}
-              disabled={pending}
-              className="px-3 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition text-sm disabled:opacity-60"
-            >
-              💰 Cobrar
-            </button>
             <button
               onClick={() => setModal('cae')}
               disabled={pending}
@@ -121,85 +86,7 @@ export function CambiarEstadoFactura({
             </button>
           </>
         )}
-
-        {estado === 'cobrada' && (
-          <button
-            onClick={descobrar}
-            disabled={pending}
-            className="px-3 py-2 border border-amber-300 bg-amber-50 text-amber-700 rounded-lg font-medium hover:bg-amber-100 transition text-sm disabled:opacity-60"
-          >
-            ↺ Descobrar (volver a Emitida)
-          </button>
-        )}
       </div>
-
-      {/* MODAL COBRAR */}
-      {modal === 'cobrar' && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setModal(null)}
-        >
-          <div
-            className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-bold">💰 Registrar cobro</h3>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Forma de pago *</label>
-              <select
-                value={formaPago}
-                onChange={(e) => setFormaPago(e.target.value)}
-                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-              >
-                <option value="efectivo">💵 Efectivo</option>
-                <option value="transferencia">🏦 Transferencia</option>
-                <option value="cheque">📑 Cheque</option>
-                <option value="mercado_pago">💳 Mercado Pago</option>
-                <option value="tarjeta">💳 Tarjeta</option>
-                <option value="otro">📋 Otro</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Fecha de cobro *</label>
-              <input
-                type="date"
-                value={fechaCobro}
-                onChange={(e) => setFechaCobro(e.target.value)}
-                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Observaciones (opcional)</label>
-              <textarea
-                value={obsCobro}
-                onChange={(e) => setObsCobro(e.target.value)}
-                rows={2}
-                placeholder="Nº transferencia, banco, comprobante..."
-                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-y"
-              />
-            </div>
-
-            <div className="flex gap-2 justify-end pt-2">
-              <button
-                onClick={() => setModal(null)}
-                className="px-4 py-2 border border-[var(--border)] rounded-lg font-medium hover:bg-[var(--bg-hover)] transition text-sm"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmarCobro}
-                disabled={pending}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition text-sm disabled:opacity-60"
-              >
-                {pending ? 'Guardando...' : 'Confirmar cobro'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL ANULAR */}
       {modal === 'anular' && (
@@ -213,7 +100,7 @@ export function CambiarEstadoFactura({
           >
             <h3 className="text-lg font-bold text-red-700">✗ Anular factura</h3>
             <p className="text-sm text-[var(--fg-muted)]">
-              La factura quedará anulada y no contará en ningún total. Esta acción se puede revertir solo eliminándola si es borrador.
+              La factura quedará anulada y se descontará del saldo del cliente lo que aún se debía.
             </p>
 
             <div>
